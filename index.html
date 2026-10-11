@@ -41,7 +41,7 @@ body.frenzy{background:radial-gradient(circle at 50% 20%,#6b5a2a,#2d3a24 60%)}
 .seed{font-size:13px;color:var(--lilac);margin-top:4px;min-height:18px}
 .buff{font-size:14px;color:var(--spore);min-height:20px;font-weight:700}
 .stage{position:relative;height:290px;cursor:pointer;margin:0 -16px}
-.tierchip{position:absolute;left:22px;top:2px;z-index:3;pointer-events:none;font-size:12px;line-height:1.35;padding:5px 10px 6px;border-radius:12px;background:rgba(0,0,0,.28);max-width:60%}
+.tierchip{font-size:12px;line-height:1.5;padding:8px 12px;margin:8px 0;border-radius:12px;background:rgba(0,0,0,.28)}
 .tierchip small{opacity:.75;font-size:11px}
 .rq{display:inline-block;margin:2px 7px 0 0;font-size:10.5px;opacity:.8}
 .rq.ok{color:var(--spore);opacity:1}
@@ -98,7 +98,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .flashscreen{position:fixed;inset:0;background:#fff3c4;z-index:4;pointer-events:none;opacity:0}
 .flashscreen.go{animation:fl .5s}
 @keyframes fl{0%{opacity:.5}100%{opacity:0}}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--lichen);color:var(--moss);padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .3s;z-index:9;white-space:nowrap}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);background:var(--lichen);color:var(--moss);padding:12px 16px;border-radius:16px;font-size:15px;line-height:1.5;text-align:center;overflow-wrap:anywhere;box-shadow:0 4px 18px rgba(0,0,0,.3);opacity:0;transition:opacity .3s;z-index:21;pointer-events:none}
 .savebar{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:18px}
 .savebar button{padding:9px;border:1px solid var(--moss2);background:rgba(0,0,0,.15);color:var(--lichen);border-radius:10px;font:inherit;font-size:13px}
 #btnReset{color:#e59a8f}
@@ -138,7 +138,6 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
   </div>
   <div class="stage">
     <canvas id="garden"></canvas>
-    <div class="tierchip" id="tierChip"></div>
     <div class="evchip" id="evChip"></div>
     <button id="shroom" aria-label="點擊蘑菇收集孢子">
       <svg viewBox="0 0 200 200" width="190" height="190">
@@ -154,6 +153,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
     </button>
     <div class="combo"><div class="txt" id="comboTxt"></div><div class="bar"><div class="fill" id="comboFill"></div></div></div>
   </div>
+  <div class="tierchip" id="tierChip" aria-label="聚落升級進度"></div>
   <div class="tabs">
     <button class="on" data-t="gen">菌群<span class="dot" id="dotgen"></span></button>
     <button data-t="up">強化<span class="dot" id="dotup"></span></button>
@@ -169,7 +169,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
   </div>
   <div class="saveinfo" id="saveinfo">讀取存檔中…</div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="modal" id="modal"><div class="box"><div id="mText"></div><textarea id="mInput"></textarea><div class="btns"><button class="cancel" id="mCancel">取消</button><button class="ok" id="mOk">確定</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -252,7 +252,7 @@ document.addEventListener('pointerdown',e=>{
   if(!RM)ripple(b,e);
   sfx.click();navigator.vibrate&&navigator.vibrate(8);
 });
-function toast(t){const el=$('toast');el.textContent=t;el.style.opacity=1;clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity=0,2200)}
+function toast(t){const el=$('toast');el.textContent=t;el.style.opacity=1;clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity=0,3500)}
 function retrigger(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c)}
 function banner(t){const b=$('banner');b.textContent=t;retrigger(b,'show')}
 function flash(){if(!RM)retrigger($('flash'),'go')}
