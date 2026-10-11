@@ -74,7 +74,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 #golden{position:fixed;z-index:7;width:64px;height:64px;border:none;background:none;font-size:48px;padding:0;display:none;animation:bob 1.2s ease-in-out infinite;filter:drop-shadow(0 0 14px #ffd86b)}
 @keyframes bob{50%{transform:translateY(-8px) rotate(8deg)}}
 .tabs{display:flex;gap:6px;margin:8px 0}
-.tabs button{flex:1;padding:9px;border:1px solid var(--moss2);background:transparent;color:var(--lichen);border-radius:18px;font:inherit;position:relative}
+.tabs button{flex:1;min-width:0;min-height:44px;padding:9px 3px;border:1px solid var(--moss2);background:transparent;color:var(--lichen);border-radius:18px;font:inherit;font-size:13px;position:relative}
 .tabs button.on{background:var(--lichen);color:var(--moss)}
 .tabs button .dot{position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--spore);display:none}
 .tabs button .dot.show{display:block}
@@ -98,7 +98,12 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .sticker-card svg{display:block;width:100%;max-width:96px;height:auto;margin:auto}.sticker-card:focus-visible{outline:3px solid var(--spore);outline-offset:2px}
 .sticker-detail{padding:16px;margin:12px 0;border:1px dashed var(--lilac);border-radius:18px;text-align:center}.sticker-detail svg{display:block;width:210px;max-width:100%;height:auto;margin:auto}.sticker-detail h3{font-size:17px;margin:10px 0 4px}.sticker-detail p{margin:6px 0}
 .memory{margin-top:12px;padding:12px;border:1px dashed var(--lilac);border-radius:14px}.memory h3{font-size:15px;margin:0 0 8px}.memory svg{width:90px;height:90px;display:block;margin:auto;background:#dfe8cf;border:4px solid #f2c14e;border-radius:24px;transform:rotate(-4deg)}
+
+.stage[data-theme=dew]{background:radial-gradient(ellipse at 50% 90%,#5b8b7255,#afd9c118 70%)}
+.stage[data-theme=moon]{background:radial-gradient(ellipse at 80% 20%,#9b8bcb40,#343d6020 75%)}
+.forest details{border-top:1px solid #60705a;padding:8px 0}.forest summary{min-height:44px;padding:12px 0;cursor:pointer;font-size:14px}.forest label{display:block;font-size:13px;margin:8px 0 4px}.forest select{display:block;width:100%;min-width:0;min-height:44px;border:1px solid #738469;border-radius:10px;background:#243d31;color:var(--lichen);font:inherit;font-size:13px;padding:8px}.forest select:focus-visible,.forest summary:focus-visible{outline:3px solid var(--spore)}.forest-row{border-bottom:1px dashed #60705a;padding:0 0 12px}.visitor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.visitor-grid button{min-width:0;min-height:140px;background:#243d31;color:var(--lichen);border:1px solid #738469;border-radius:14px;padding:6px;font:inherit;font-size:13px}.visitor-grid svg{display:block;width:100%;height:auto}.visitor-grid small{display:block;font-size:11px;line-height:1.5}.visitor-grid button:disabled{opacity:.7}
 @media(prefers-reduced-motion:reduce){.portrait.react svg{animation:none}}
+
 .item{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;background:rgba(0,0,0,.18);border-left:4px solid var(--lilac);border-radius:4px 12px 12px 4px;transition:background .3s}
 .item.flash{background:rgba(242,193,78,.35)}
 .item .ico{font-size:26px;width:34px;text-align:center;display:inline-block}
@@ -179,6 +184,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
     <button class="on" data-t="gen">菌群<span class="dot" id="dotgen"></span></button>
     <button data-t="up">強化<span class="dot" id="dotup"></span></button>
     <button data-t="pre">孢子雨<span class="dot" id="dotpre"></span></button>
+    <button data-t="forest">森林</button>
     <button data-t="album">圖鑑<span class="dot" id="dotalbum"></span></button>
   </div>
   <div id="panel"></div>
@@ -221,7 +227,82 @@ const UPS=[
  {id:'g5',n:'王冠傳承',d:'古老菌王 ×2',c:8e7,req:s=>s.g[5]>=10,f:s=>s.gm[5]*=2},
  {id:'g6',n:'銀河黴菌',d:'星際孢囊 ×2',c:1.5e9,req:s=>s.g[6]>=10,f:s=>s.gm[6]*=2},
 ];
-function fresh(seeds=0,best=0,snd=true,peak=0){return{version:3,collection:[],achievements:[],stats:{combo:0,gold:0,prestiges:0,events:[]},sp:0,total:0,g:GENS.map(()=>0),bought:[],seeds,best,last:Date.now(),ms:0,snd,peak}}
+/* ---------- 自己的森林：配置與永久收藏 ---------- */
+function freshForest(){return{jobs:[null,null],decor:[null,null,null],decorUnlocked:[],theme:'star',themesUnlocked:['star'],visitors:[],nextEvent:null,preparation:'none'}}
+const DECOR=[
+ {id:'bench',n:'長椅',friend:'moss',hint:'遇見苔苔',story:'苔苔挪出一點位置，和路過的朋友一起坐坐。'},
+ {id:'lamp',n:'閱讀燈',friend:'peach',hint:'遇見桃桃',story:'桃桃把燈點亮，今晚的故事可以多讀一頁。'},
+ {id:'mailbox',n:'信箱',friend:'elder',hint:'遇見慢慢',story:'慢慢收好信封，森林裡的思念有了落腳處。'}
+];
+const THEMES=[
+ {id:'star',n:'星光森林',hint:'一開始就有',story:'夜色裡的孢子像星星，苔苔替每位朋友留一盞微光。'},
+ {id:'dew',n:'晨露花園',hint:'遇見三位居民',story:'晨露落在小花上，桃桃邀大家把第一個好心情種進花園。'},
+ {id:'moon',n:'月光書林',hint:'完成「大家一起坐坐」成就',story:'慢慢翻開森林故事，月亮靜靜聽著，連小菇都捨不得睡。'}
+];
+const VISITORS=[
+ {id:'dew',n:'露露',cap:'#8bb75c',hint:'遇見苔苔並放置長椅',story:'露露走過好多森林，第一次有人替她留了長椅。她把一片帶著晨露的葉子，夾進了你的回憶。',line:'這裡好舒服……下一段旅程，我也會記得你！'},
+ {id:'ink',n:'小墨',cap:'#9c80c1',hint:'月光書林裡放置閱讀燈',story:'小墨抱著厚厚的書走來，把尚未寫完的那一頁留給森林。原來，和朋友一起讀的故事才有最暖的結尾。',line:'這一頁，我們一起讀好嗎？'},
+ {id:'post',n:'郵郵',cap:'#d99554',hint:'放置信箱並參加過任一慶典',story:'郵郵循著歡笑聲找到信箱，送來一封沒有地址的信：謝謝你，讓小小的菇菇也有了家。',line:'叮咚！今天的信，裝著一點點想念。'}
+];
+const workMul=role=>1+S.forest.jobs.filter(j=>j&&j.role===role).length*(role==='tap'?0.15:0.1);
+function validateForest(raw,next){
+ if(raw===undefined)return freshForest();
+ if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('無效森林');
+ const f={...freshForest(),...raw};
+ const ids=(list,table)=>Array.isArray(list)&&list.every(id=>table.some(x=>x.id===id))&&new Set(list).size===list.length;
+ if(!ids(f.decorUnlocked,DECOR)||!ids(f.themesUnlocked,THEMES)||!f.themesUnlocked.includes('star')||!ids(f.visitors,VISITORS))throw Error('無效森林收藏');
+ if(!Array.isArray(f.jobs)||f.jobs.length!==2||!f.jobs.every(j=>j===null||j&&typeof j==='object'&&!Array.isArray(j)&&next.collection.includes(j.friend)&&['tap','idle'].includes(j.role))||new Set(f.jobs.filter(Boolean).map(j=>j.friend)).size!==f.jobs.filter(Boolean).length)throw Error('無效居民分工');
+ if(!Array.isArray(f.decor)||f.decor.length!==3||!f.decor.every(id=>id===null||f.decorUnlocked.includes(id)))throw Error('無效裝飾');
+ if(!f.themesUnlocked.includes(f.theme)||!['none','garland','picnic'].includes(f.preparation)||f.nextEvent!==null&&!EVENTS.some(e=>e.id===f.nextEvent&&e.tier<=tierOf(next.g)))throw Error('無效森林配置');
+ return{jobs:f.jobs.map(j=>j?{friend:j.friend,role:j.role}:null),decor:f.decor.slice(),decorUnlocked:f.decorUnlocked.slice(),theme:f.theme,themesUnlocked:f.themesUnlocked.slice(),visitors:f.visitors.slice(),nextEvent:f.nextEvent,preparation:f.preparation};
+}
+function unlockForest(){
+ const f=S.forest;let changed=false;
+ const add=(list,id)=>{if(!list.includes(id)){list.push(id);changed=true}};
+ DECOR.forEach(d=>{if(S.collection.includes(d.friend))add(f.decorUnlocked,d.id)});
+ if(S.collection.length===FRIENDS.length)add(f.themesUnlocked,'dew');
+ if(S.achievements.includes('story'))add(f.themesUnlocked,'moon');
+ if(f.decor.includes('bench')&&S.collection.includes('moss'))add(f.visitors,'dew');
+ if(f.theme==='moon'&&f.decor.includes('lamp'))add(f.visitors,'ink');
+ if(f.decor.includes('mailbox')&&S.stats.events.length)add(f.visitors,'post');
+ stage.dataset.theme=f.theme;
+ if(changed){if(tab==='forest')renderForest();if(tab==='album')renderAlbum();save()}
+}
+const option=(id,n,chosen,locked=false)=>`<option value="${id}" ${id===chosen?'selected':''} ${locked?'disabled':''}>${n}</option>`;
+function renderForest(){
+ const f=S.forest;
+ const opened=[...document.querySelectorAll('.forest details')].map(d=>d.open);
+ $('panel').innerHTML=`<section class="album forest"><h2>一起照顧森林</h2><p>沒有期限，也不用接任務。想換配置時再來看看；工作與收藏會跨孢子雨保留。</p>
+ <details open><summary>居民分工 · 兩個工作槽</summary><div id="forestJobs">${f.jobs.map((j,i)=>`<div class="forest-row"><label for="jobFriend${i}">工作槽 ${i+1}</label><select id="jobFriend${i}" data-job="${i}">${option('','空位',j?.friend||'')}${FRIENDS.filter(c=>S.collection.includes(c.id)).map(c=>option(c.id,c.n,j?.friend,f.jobs.some((x,k)=>k!==i&&x?.friend===c.id))).join('')}</select><label for="jobRole${i}">工作</label><select id="jobRole${i}" data-role="${i}" ${j?'':'disabled'}>${option('tap','採集幫手 · 點擊 +15%',j?.role||'tap')}${option('idle','菌群照料 · 自動 +10%',j?.role)}</select></div>`).join('')}</div><p id="workPreview">點擊基礎 ×${workMul('tap').toFixed(2)} · 自動產出 ×${workMul('idle').toFixed(2)}<br>目前每次採集 ${fmt(tapVal())} · 每秒 ${fmt(pps())}</p><p>採集幫手影響基礎點擊；照料也會幫忙離線收集。兩位可分工，沒有費用。</p></details>
+ <details><summary>準備下一場慶典</summary><label for="forestEvent">下一場</label><select id="forestEvent">${option('','自動安排',f.nextEvent||'')}${EVENTS.filter(e=>e.tier<=tierOf(S.g)).map(e=>option(e.id,e.n,f.nextEvent)).join('')}</select><label for="forestPrep">一項準備</label><select id="forestPrep">${option('none','隨意聚聚 · 產量 ×1.5',f.preparation)}${option('garland','花環 · 本場多 8 秒',f.preparation)}${option('picnic','野餐籃 · 本場產量 ×1.65',f.preparation)}</select><p id="forestEventStatus">${eventStatus()}</p><p>開始時採用準備，接著回到自動安排；活動中更改只影響下一場。</p></details>
+ <details open><summary>三個裝飾位置</summary><div id="forestDecor">${f.decor.map((id,i)=>`<label for="decor${i}">${['左邊','中間','右邊'][i]}</label><select id="decor${i}" data-decor="${i}">${option('','留空',id||'')}${DECOR.map(d=>option(d.id,d.n+(f.decorUnlocked.includes(d.id)?'':' · '+d.hint),id,!f.decorUnlocked.includes(d.id))).join('')}</select>${id?`<p>${DECOR.find(d=>d.id===id).story}</p>`:''}`).join('')}</div><p>看菇菇坐坐、讀書、收信。裝飾只帶來故事與陪伴，不加產量。</p></details>
+ <details open><summary>森林的模樣</summary><label for="forestTheme">主題</label><select id="forestTheme">${THEMES.map(t=>option(t.id,t.n+(f.themesUnlocked.includes(t.id)?'':' · '+t.hint),f.theme,!f.themesUnlocked.includes(t.id))).join('')}</select><p id="themeStory">${THEMES.find(t=>t.id===f.theme).story}</p><p>稀有訪客 ${f.visitors.length}／3 · 外觀與故事在圖鑑查看。</p></details></section>`;
+ document.querySelectorAll('.forest details').forEach((d,i)=>{if(opened[i]!==undefined)d.open=opened[i]});
+}
+function eventStatus(){return ev?`本場：${ev.def.n} · ${ev.preparation==='garland'?'花環':ev.preparation==='picnic'?'野餐籃':'隨意聚聚'} · 產量 ×${ev.mul}`:'等待下一場，準備沒有期限。'}
+function refreshForestUI(){if(tab!=='forest')return;$('workPreview').innerHTML=`點擊基礎 ×${workMul('tap').toFixed(2)} · 自動產出 ×${workMul('idle').toFixed(2)}<br>目前每次採集 ${fmt(tapVal())} · 每秒 ${fmt(pps())}`;$('forestEventStatus').textContent=eventStatus()}
+$('panel').addEventListener('change',e=>{
+ const el=e.target,f=S.forest;
+ if(el.dataset.job!==undefined){const i=+el.dataset.job,id=el.value;if(id&&(!S.collection.includes(id)||f.jobs.some((j,k)=>k!==i&&j?.friend===id)))return;f.jobs[i]=id?{friend:id,role:f.jobs[i]?.role||'tap'}:null}
+ else if(el.dataset.role!==undefined){const j=f.jobs[+el.dataset.role];if(!j||!['tap','idle'].includes(el.value))return;j.role=el.value}
+ else if(el.dataset.decor!==undefined){if(el.value&&!f.decorUnlocked.includes(el.value))return;f.decor[+el.dataset.decor]=el.value||null}
+ else if(el.id==='forestTheme'){if(!f.themesUnlocked.includes(el.value))return;f.theme=el.value}
+ else if(el.id==='forestEvent'){if(el.value&&!EVENTS.some(v=>v.id===el.value&&v.tier<=tierOf(S.g)))return;f.nextEvent=el.value||null}
+ else if(el.id==='forestPrep'){if(!['none','garland','picnic'].includes(el.value))return;f.preparation=el.value}
+ else return;
+ const focus=el.id;unlockForest();renderForest();$(focus)?.focus({preventScroll:true});hud();save();
+});
+function visitorPortrait(v,locked=false){
+ const art=locked?'':v.id==='dew'?'<path d="M55 70 Q74 13 124 38 Q123 80 55 70Z" fill="#b9d883"/><path d="M70 63 L113 39" stroke="#5d814e" stroke-width="4"/>':v.id==='ink'?'<path d="M53 146 L94 151 L94 187 L53 178Z M94 151 L140 143 L140 178 L94 187Z" fill="#d9c394" stroke="#6c516e" stroke-width="4"/><path d="M64 158 L84 162 M105 162 L129 157" stroke="#8a7051" stroke-width="3"/>':'<path d="M127 111 L63 178" stroke="#765331" stroke-width="7"/><rect x="119" y="151" width="39" height="32" rx="6" fill="#9a653b"/><path d="M125 157 L145 157 L145 169 L125 169Z" fill="#f6e9c8"/><path d="M125 157 L135 164 L145 157" fill="none" stroke="#9a653b"/>';
+ return friendPortrait({...v,spots:'#e7edc8'},locked).replace('</svg>',art+'</svg>');
+}
+function visitorBook(){return `<section id="visitorBook"><h2>路過的稀有朋友</h2><p>不同的森林配置會留下相遇；沒有隨機抽取，也沒有期限。</p><div class="visitor-grid">${VISITORS.map(v=>{const seen=S.forest.visitors.includes(v.id);return `<button data-visitor="${v.id}" ${seen?'':'disabled'} aria-label="${seen?'和'+v.n+'打招呼':v.n+'尚未遇見'}">${visitorPortrait(v,!seen)}<strong>${seen?v.n:'未遇見'}</strong><small>${seen?'點一下，聽我說話':v.hint}</small></button>`}).join('')}</div><p id="visitorResponse" class="album-response" role="status" aria-live="polite">${S.forest.visitors.length?'點選已遇見的訪客，讀讀我們的故事。':'森林裡，還有朋友正在路上。'}</p></section>`}
+let visitorReactAt=-Infinity;
+function greetVisitor(id){const v=VISITORS.find(v=>v.id===id);if(!v||!S.forest.visitors.includes(id)||performance.now()-visitorReactAt<1200)return;visitorReactAt=performance.now();$('visitorResponse').textContent=`${v.n}：「${v.line}」 ${v.story}`}
+function resetTransient(){endEvent(true);nextEvId=null;nextEv=0;lastEvId=null;combo=0;lastTap=0;tapLog=[];buffMul=1;buffEnd=0;tapBuff=1;tapBuffEnd=0;document.body.classList.remove('frenzy');$('golden').style.display='none';clearTimeout(goldHide);scheduleGold()}
+
+
+function fresh(seeds=0,best=0,snd=true,peak=0){return{version:3,forest:freshForest(),collection:[],achievements:[],stats:{combo:0,gold:0,prestiges:0,events:[]},sp:0,total:0,g:GENS.map(()=>0),bought:[],seeds,best,last:Date.now(),ms:0,snd,peak}}
 let S=fresh(),D={},tab='gen';
 const FRIENDS=[
  {id:'moss',n:'苔苔',kind:'小香菇',at:3,t:0,cap:'#e0573f',spots:'#fff0d2',trait:'害羞的小鄰居',desc:'喜歡在苔蘚旁找最柔軟的位置。每次看見你，都會偷偷揮一下手。',line:'你來啦……我留了一個位置給你。',hint:'菌群總數達 3'},
@@ -306,7 +387,7 @@ function friendPortrait(f,locked=false){
 }
 function renderAlbum(){
  const f=FRIENDS.find(f=>f.id===albumId),known=S.collection.includes(f.id);
- $('panel').innerHTML=`<section class="album" aria-label="菇菇圖鑑"><h2>森林裡的朋友</h2><p>已遇見 ${S.collection.length}／${FRIENDS.length} 位 · 收藏會陪你走過每一次孢子雨</p><div class="album-list">${FRIENDS.map(c=>{const seen=S.collection.includes(c.id);return `<button data-friend="${c.id}" aria-pressed="${c.id===albumId}">${friendPortrait(c,!seen)}${seen?c.n:'未遇見'}<small>${seen?c.kind:'神祕的菇菇'}</small></button>`}).join('')}</div><h2>${known?f.n+' · '+f.trait:'一位還沒遇見的朋友'}</h2><button class="portrait" id="friendPortrait" ${known?'':'disabled'} aria-label="${known?'和'+f.n+'打招呼':'尚未解鎖的菇菇剪影'}">${friendPortrait(f,!known)}<span>${known?'點一下，和我打招呼':'繼續養大森林，就能遇見我'}</span></button><p>${known?f.desc:'解鎖條件：'+f.hint}</p><p class="album-response" id="friendResponse" role="status" aria-live="polite">${known?'「很高興在這裡遇見你。」':'目前人口：'+popN()+' · 聚落：'+TIERS[tierOf(S.g)].n}</p><div id="albumMemory">${known?memoryCard(FRIENDS.indexOf(f)):""}</div>${achievementList()}</section>`;
+ $('panel').innerHTML=`<section class="album" aria-label="菇菇圖鑑"><h2>森林裡的朋友</h2><p>已遇見 ${S.collection.length}／${FRIENDS.length} 位 · 收藏會陪你走過每一次孢子雨</p><div class="album-list">${FRIENDS.map(c=>{const seen=S.collection.includes(c.id);return `<button data-friend="${c.id}" aria-pressed="${c.id===albumId}">${friendPortrait(c,!seen)}${seen?c.n:'未遇見'}<small>${seen?c.kind:'神祕的菇菇'}</small></button>`}).join('')}</div><h2>${known?f.n+' · '+f.trait:'一位還沒遇見的朋友'}</h2><button class="portrait" id="friendPortrait" ${known?'':'disabled'} aria-label="${known?'和'+f.n+'打招呼':'尚未解鎖的菇菇剪影'}">${friendPortrait(f,!known)}<span>${known?'點一下，和我打招呼':'繼續養大森林，就能遇見我'}</span></button><p>${known?f.desc:'解鎖條件：'+f.hint}</p><p class="album-response" id="friendResponse" role="status" aria-live="polite">${known?'「很高興在這裡遇見你。」':'目前人口：'+popN()+' · 聚落：'+TIERS[tierOf(S.g)].n}</p><div id="albumMemory">${known?memoryCard(FRIENDS.indexOf(f)):""}</div>${achievementList()}${visitorBook()}</section>`;
  achievementUnread=false;$('dotalbum').classList.remove('show');updateAchievementUI();
 }
 function unlockFriends(){
@@ -321,10 +402,10 @@ function derive(){
   D.seedMul=1+S.seeds*0.1;
 }
 const cost=i=>Math.ceil(GENS[i].base*Math.pow(1.15,S.g[i]));
-const basePps=()=>GENS.reduce((a,g,i)=>a+g.p*S.g[i]*D.gm[i],0)*D.all*D.seedMul;
+const basePps=()=>GENS.reduce((a,g,i)=>a+g.p*S.g[i]*D.gm[i],0)*D.all*D.seedMul*workMul('idle');
 const pps=()=>basePps()*buffMul*evMul();
 const comboMul=()=>1+Math.min(combo,50)*0.02;
-const tapVal=()=>((D.tapM*D.seedMul)+pps()*D.tapPct)*comboMul()*tapBuff;
+const tapVal=()=>((D.tapM*D.seedMul*workMul('tap'))+pps()*D.tapPct)*comboMul()*tapBuff;
 const seedGain=()=>Math.floor(Math.sqrt(S.total/1e6));
 function fmt(n){
   if(n<1000)return n<10?(Math.floor(n*10)/10).toString():Math.floor(n).toString();
@@ -454,7 +535,7 @@ const CAPS=[30,12,12,12,8,4,6];
 let ent=GENS.map(()=>[]),gSpores=[],smoke=[],walkers=[],gTier=0,gTierReady=false,castleBorn=0;
 const rnd=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 function syncGarden(){
-  unlockFriends();
+  unlockFriends();unlockForest();
   GENS.forEach((g,i)=>{
     const want=Math.min(S.g[i],CAPS[i]);
     while(ent[i].length<want){const k=ent[i].length;ent[i].push({born:performance.now(),a:rnd(i*50+k+1),b:rnd(i*50+k+7.3),c:rnd(i*50+k+13.9)})}
@@ -813,13 +894,14 @@ const FW=['255,120,120','255,220,120','140,220,255','200,160,255','150,255,190']
 const STALLC=['#c8463a','#4f9a8a','#d9823b','#8d6bb8'];
 const ACTB={dance:['note'],clap:['heart','note'],cheer:['star','heart'],vend:['coin'],shop:['coin','heart'],march:['note','star'],ride:['heart','star']};
 const evI=now=>ev?Math.max(0,Math.min(1,(now-ev.start)/1200,(ev.end-now)/1200)):0;
-function evMul(){return ev?1.5:1}
+function evMul(){return ev?ev.mul:1}
 const eb=(e,now,amp)=>ev&&ev.id==='dance'?-Math.abs(Math.sin(now/260+e.a*6))*amp*evI(now):0;
 const crowd=()=>walkers.concat(guests);
 const stallXs=()=>{const c=GW/2;return [c-135,c-60,c+60,c+135].map(x=>Math.min(GW-28,Math.max(28,x)))};
 const scheduleEvent=ms=>{nextEv=performance.now()+ms};
 function pickEvent(){
-  let id=nextEvId;nextEvId=null;
+  let id=S.forest.nextEvent||nextEvId;nextEvId=null;S.forest.nextEvent=null;
+  if(id&&!EVENTS.some(e=>e.id===id&&e.tier<=gTier))id=null;
   if(!id){const un=EVENTS.filter(e=>e.tier<=gTier);let pool=un.filter(e=>e.id!==lastEvId);if(!pool.length)pool=un;id=pool[Math.floor(Math.random()*pool.length)].id}
   lastEvId=id;return EVENTS.find(e=>e.id===id);
 }
@@ -862,13 +944,16 @@ function assignEvent(id){
 function startEvent(def){
   if(!S.stats.events.includes(def.id))S.stats.events.push(def.id);
   const now=performance.now();
-  ev={id:def.id,def,start:now,end:now+def.dur};
+  const preparation=S.forest.preparation;S.forest.preparation='none';S.forest.nextEvent=null;
+  ev={id:def.id,def,start:now,end:now+def.dur+(preparation==='garland'?8000:0),preparation,mul:preparation==='picnic'?1.65:1.5};
+  if(tab==='forest')renderForest();
   evSp.length=0;evRockets.length=0;lastBeat=0;
   document.body.classList.add('evt-'+def.id);
   banner(`${def.i} ${def.n}開始！`);sfx.milestone();flash();
-  toast('活動期間孢子產量 ×1.5');
+  toast('活動期間孢子產量 ×'+ev.mul);
   spawnGuests(Math.min(4+gTier*2,12));
   assignEvent(def.id);
+  save();
 }
 function endEvent(silent){
   if(!ev)return;
@@ -888,7 +973,7 @@ function tickEvents(){
   }
   guests=guests.filter(g=>!g.dead);
   const el=$('evChip');let txt='',on=false;
-  if(ev){txt=`${ev.def.i} ${ev.def.n} ×1.5　${Math.ceil((ev.end-now)/1000)}s`;on=true}
+  if(ev){txt=`${ev.def.i} ${ev.def.n} ×${ev.mul}　${Math.ceil((ev.end-now)/1000)}s`;on=true}
   else if(nextEv&&gTierReady){const sec=Math.max(0,Math.ceil((nextEv-now)/1000));txt=`下一場活動 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
   if(el._k!==txt+on){el._k=txt+on;el.textContent=txt;el.classList.toggle('on',on)}
 }
@@ -1024,11 +1109,73 @@ function drawEvSp(dt){
   if(evSp.length>300)evSp.splice(0,evSp.length-300);
 }
 
+function drawForestDecor(t,G){
+ const f=S.forest;
+ f.decor.forEach((id,i)=>{
+  if(!id)return;const x=GW*[0.16,0.5,0.84][i],y=G+33;
+  gx.save();gx.translate(x,y);
+  if(id==='bench'){
+   gx.fillStyle='#9c7350';gx.fillRect(-21,-15,42,5);gx.fillRect(-21,-5,42,5);gx.fillRect(-17,-21,4,29);gx.fillRect(13,-21,4,29);
+   miniShroom(0,-4,15,'#d97766','#f5e7ce',RM?0:Math.sin(t/1700)*0.025,'sleep');
+   gx.fillStyle='#f5e7ce';gx.fillRect(-8,0,5,4);gx.fillRect(3,0,5,4);
+  }else if(id==='lamp'){
+   gx.save();gx.shadowColor='#ffe1a1';gx.shadowBlur=RM?8:12+Math.sin(t/900)*3;gx.fillStyle='#f4d48a';gx.fillRect(-17,-40,7,10);gx.restore();
+   gx.strokeStyle='#907250';gx.lineWidth=3;gx.beginPath();gx.moveTo(-13,4);gx.lineTo(-13,-44);gx.lineTo(0,-44);gx.stroke();
+   miniShroom(10,0,14,'#c891a6','#f5e7ce',0,'sleep');
+   gx.fillStyle='#eee0bd';gx.fillRect(0,-7,18,9);gx.strokeStyle='#8d7061';gx.lineWidth=1;gx.beginPath();gx.moveTo(9,-7);gx.lineTo(9,2);gx.stroke();
+  }else{
+   gx.fillStyle='#977253';gx.fillRect(-13,-25,4,29);gx.fillStyle='#c96665';rrect(-24,-34,27,15,4);gx.fill();gx.fillStyle='#f2c14e';gx.fillRect(-2,-42,3,14);
+   const step=RM?0:Math.sin(t/1400)*2;miniShroom(14+step,2,14,'#a99d8e','#f5e7ce',0,'open');
+   gx.fillStyle='#f6e9cf';gx.fillRect(0+step,-12,13,8);gx.strokeStyle='#a48264';gx.lineWidth=1;gx.beginPath();gx.moveTo(step,-12);gx.lineTo(6+step,-8);gx.lineTo(13+step,-12);gx.stroke();
+  }
+  gx.restore();
+ });
+}
+function drawForestWork(t,G){
+ S.forest.jobs.forEach((j,i)=>{
+  if(!j)return;const f=FRIENDS.find(f=>f.id===j.friend),x=GW*(i?0.76:0.24)+(RM?0:Math.sin(t/(j.friend==='elder'?2400:1500)+i)*7),y=G-10;
+  miniShroom(x,y,17,f.cap,'#efe6cf',RM?0:Math.sin(t/700+i)*0.04,'open');
+  if(j.friend==='peach'){gx.fillStyle='#b79ad9';gx.beginPath();gx.moveTo(x+10,y-19);gx.lineTo(x+4,y-24);gx.lineTo(x+4,y-15);gx.lineTo(x+16,y-24);gx.lineTo(x+16,y-15);gx.closePath();gx.fill()}
+  if(j.friend==='elder'){gx.strokeStyle='#7b5639';gx.lineWidth=2;gx.beginPath();gx.moveTo(x-13,y);gx.lineTo(x-13,y-15);gx.quadraticCurveTo(x-13,y-20,x-8,y-16);gx.stroke()}
+  gx.save();gx.translate(x+13,y-8);
+  if(j.role==='tap'){
+   gx.fillStyle='#be9258';rrect(-6,-4,13,9,2);gx.fill();gx.strokeStyle='#dcc59d';gx.lineWidth=2;gx.beginPath();gx.arc(0,-4,5,Math.PI,0);gx.stroke();
+   gx.fillStyle='#f2c14e';gx.beginPath();gx.arc(0,-6,2,0,7);gx.fill();
+  }else{
+   gx.fillStyle='#86b5b0';rrect(-6,-6,12,9,2);gx.fill();gx.beginPath();gx.moveTo(5,-4);gx.lineTo(13,-9);gx.lineTo(14,-5);gx.lineTo(6,1);gx.fill();
+   gx.strokeStyle='#86b5b0';gx.lineWidth=2;gx.beginPath();gx.arc(-6,-2,4,Math.PI/2,Math.PI*1.5);gx.stroke();
+   gx.fillStyle='#b2dfe2';for(let k=0;k<3;k++){const dy=RM?6:((t/170+k*4)%13);gx.beginPath();gx.arc(14+k*2,dy,1,0,7);gx.fill()}
+  }gx.restore();
+ });
+}
+function drawForestVisitor(t,G){
+ const ids=S.forest.visitors;if(!ids.length)return;
+ const id=ids[RM?0:Math.floor(t/12000)%ids.length],v=VISITORS.find(v=>v.id===id),x=GW*0.7,y=G+31;
+ miniShroom(x,y,18,v.cap,'#efe6cf',0,'open');gx.save();gx.translate(x,y);
+ if(id==='dew'){gx.fillStyle='#c0dc8c';gx.beginPath();gx.ellipse(-6,-23,12,5,-0.5,0,7);gx.fill()}
+ else if(id==='ink'){gx.fillStyle='#d9c394';gx.fillRect(-10,-9,20,11);gx.strokeStyle='#6c516e';gx.lineWidth=1;gx.beginPath();gx.moveTo(0,-9);gx.lineTo(0,2);gx.stroke()}
+ else{gx.strokeStyle='#765331';gx.lineWidth=3;gx.beginPath();gx.moveTo(10,-16);gx.lineTo(-10,1);gx.stroke();gx.fillStyle='#9a653b';rrect(6,-4,12,10,2);gx.fill();gx.fillStyle='#fff0cf';gx.fillRect(-15,-10,11,7)}
+ gx.font='10px "PingFang TC",sans-serif';gx.textAlign='center';gx.fillStyle='#e9eddb';gx.fillText(v.n,0,15);gx.restore();
+}
+function drawForestAtmosphere(t,G){
+ const theme=S.forest.theme;if(theme==='star')return;
+ gx.fillStyle=theme==='dew'?'rgba(145,198,166,.16)':'rgba(133,128,190,.2)';gx.fillRect(0,G+1,GW,50);
+ for(let i=0;i<10;i++){const x=GW*(i+0.5)/10,y=G+9+Math.sin(i*2)*8;gx.fillStyle=theme==='dew'?'#e6b6cc':'#bab7ef';gx.beginPath();gx.arc(x,y,2+(RM?0:Math.sin(t/1200+i)*0.5),0,7);gx.fill()}
+ if(theme==='moon'){gx.fillStyle='rgba(235,231,255,.6)';gx.beginPath();gx.arc(GW-37,42,12,0,7);gx.fill()}
+}
+function drawPreparation(t,G){
+ if(!ev||ev.preparation==='none')return;
+ if(ev.preparation==='picnic'){gx.fillStyle='#c58176';gx.fillRect(GW/2-27,G+26,54,12);gx.strokeStyle='#ecd1b4';gx.lineWidth=1;for(let i=-20;i<=20;i+=10){gx.beginPath();gx.moveTo(GW/2+i,G+26);gx.lineTo(GW/2+i,G+38);gx.stroke()}gx.fillStyle='#b58c55';rrect(GW/2-9,G+19,18,12,3);gx.fill()}
+ else{gx.strokeStyle='#79955e';gx.lineWidth=2;gx.beginPath();gx.moveTo(18,G-59);gx.quadraticCurveTo(GW/2,G-25,GW-18,G-59);gx.stroke();for(let i=0;i<9;i++){const x=18+i*(GW-36)/8,y=G-59+16*Math.sin(i*Math.PI/8);gx.fillStyle=i%2?'#e7afba':'#f2d28d';gx.beginPath();gx.arc(x,y,3,0,7);gx.fill()}}
+}
+
+
 let gLast=performance.now();
 function gardenLoop(now){
   const t=RM?0:now,dt=Math.min(now-gLast,50);gLast=now;
   gx.clearRect(0,0,GW,GH);
   const G=GH-78,cx=GW/2,fr=buffMul>1;
+  drawForestAtmosphere(t,G);
   // 星際孢囊（後方軌道）
   ent[6].forEach(e=>{const s=popIn(e,now),ang=t/(4000+e.a*5000)+e.b*6.28,rx=(GW/2-24)*(0.55+e.a*0.45),ry=18+e.c*14;
     const x=cx+Math.cos(ang)*rx,y=34+Math.sin(ang)*ry,r=(5+e.c*5)*s;
@@ -1082,6 +1229,7 @@ function gardenLoop(now){
   if(gTier>=2)[cx-68,cx+68].concat(gTier>=3?[cx-44,cx+44]:[]).forEach((x,i)=>lantern(x,t,i,G));
   const ei=evI(now);
   if(ev)drawEventBack(t,now,G,dt,ei);
+  drawForestDecor(t,G);drawForestWork(t,G);drawForestVisitor(t,G);drawPreparation(t,G);
   crowd().sort((a,b)=>(a.cy||0)-(b.cy||0)).forEach(w=>drawChar(w,t,dt,G));
   if(ev){
     drawEventFront(t,now,G,dt,ei);
@@ -1141,11 +1289,12 @@ const visibleGens=()=>GENS.map((g,i)=>i===0||S.g[i-1]>0||S.total>=g.base*0.5);
 const availUps=()=>UPS.filter(u=>!S.bought.includes(u.id)&&(!u.req||u.req(S)));
 function render(){
   if(tab==='album'){renderAlbum();return}
+  if(tab==='forest'){renderForest();return}
   const P=$('panel');let h='';const vis=visibleGens();
   if(tab==='gen'){
     GENS.forEach((g,i)=>{
       if(!vis[i]){h+=`<div class="item locked"><div class="ico">❔</div><div class="info">繼續累積孢子來發現新菌群</div></div>`;return}
-      h+=`<div class="item" id="gi${i}"><span class="ico">${g.i}</span><div class="info"><div class="name">${g.n} ×${S.g[i]}</div>每個 ${fmt(g.p*D.gm[i]*D.all*D.seedMul)}/秒</div><button data-g="${i}">${fmt(cost(i))}</button></div>`;
+      h+=`<div class="item" id="gi${i}"><span class="ico">${g.i}</span><div class="info"><div class="name">${g.n} ×${S.g[i]}</div>每個 ${fmt(g.p*D.gm[i]*D.all*D.seedMul*workMul('idle'))}/秒</div><button data-g="${i}">${fmt(cost(i))}</button></div>`;
     });
   }else if(tab==='up'){
     const list=availUps();
@@ -1159,6 +1308,7 @@ function render(){
 }
 $('panel').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.visitor){greetVisitor(b.dataset.visitor);return}
   if(b.dataset.sticker){stickerId=b.dataset.sticker;updateStickerBook();return}
   if(b.dataset.friend){albumId=b.dataset.friend;renderAlbum();$('panel').querySelector(`[data-friend="${albumId}"]`).focus({preventScroll:true});return}
   if(b.id==='friendPortrait'){
@@ -1176,9 +1326,10 @@ $('panel').addEventListener('click',e=>{
   else if(b.id==='pre'){doPrestige()}
 });
 async function doPrestige(){const g=seedGain();if(g<1)return;
-    if(!await ask({text:`確定要降下孢子雨？會獲得 ${g} 顆菌種，孢子、菌群與強化會重置。已完成成就、回憶與貼紙會保留；未完成的本輪目標隨資源重建。`,ok:'降下孢子雨'}))return;
+    if(!await ask({text:`確定要降下孢子雨？會獲得 ${g} 顆菌種，孢子、菌群與強化會重置。已完成成就、回憶、貼紙、工作、裝飾與訪客會保留；慶典準備及暫時加成會清除；未完成的本輪目標隨資源重建。`,ok:'降下孢子雨'}))return;
     const g2=seedGain();
-    const collection=S.collection.slice(),achievements=S.achievements.slice(),stats={...S.stats,events:S.stats.events.slice(),prestiges:S.stats.prestiges+1};S=fresh(S.seeds+g2,Math.max(S.best,S.total),S.snd,S.peak);S.collection=collection;S.achievements=achievements;S.stats=stats;derive();
+    const forest=structuredClone(S.forest);forest.nextEvent=null;forest.preparation='none';resetTransient();
+    const collection=S.collection.slice(),achievements=S.achievements.slice(),stats={...S.stats,events:S.stats.events.slice(),prestiges:S.stats.prestiges+1};S=fresh(S.seeds+g2,Math.max(S.best,S.total),S.snd,S.peak);S.collection=collection;S.achievements=achievements;S.stats=stats;S.forest=forest;derive();
     banner(`孢子雨！+${g2} 菌種`);sfx.milestone();flash();shake();
     for(let k=0;k<6;k++)setTimeout(()=>burst(Math.random()*innerWidth,-10,30,['#b79ad9','#dfe8cf','#f2c14e'],3,0.25),k*150);
     render();hud();save()}
@@ -1193,7 +1344,7 @@ function refreshBtns(){
 }
 let shown=0;
 function hud(bump){
-  syncGarden();
+  syncGarden();refreshForestUI();
   const c=$('count');
   c.textContent=fmt(S.sp);
   if(bump&&!RM)retrigger(c,'pop');
@@ -1225,7 +1376,7 @@ setInterval(()=>{
   $('comboTxt').textContent=combo>=5?`連擊 ${combo}　×${comboMul().toFixed(2)}`:'';
   earn(pps()/10);hud();
   const n=visibleGens().filter(Boolean).length+availUps().length;
-  if(n!==lastUnlock){lastUnlock=n;if(tab!=='album')render()}
+  if(n!==lastUnlock){lastUnlock=n;if(tab!=='album'&&tab!=='forest')render()}
 },100);
 
 /* ---------- 存檔 ---------- */
@@ -1279,7 +1430,8 @@ function applySave(str,offline){
   next.stats={combo:stats.combo,gold:stats.gold,prestiges:stats.prestiges,events:stats.events.slice()};next.version=3;delete next.wishes;
   while(next.g.length<GENS.length)next.g.push(0);
   if(o.ms===undefined)next.ms=Math.max(0,Math.floor(Math.log10(Math.max(next.total,1))/3));
-  S=next;
+  next.forest=validateForest(o.forest,next);
+  resetTransient();S=next;
   derive();gTier=tierOf(S.g);
   if(offline){const sec=Math.max(0,Math.min((Date.now()-S.last)/1000,8*3600));const gain=basePps()*sec*0.5;
     if(gain>1){earn(gain);toast(`離線期間菌群收集了 ${fmt(gain)} 孢子`)}}
@@ -1304,7 +1456,7 @@ $('btnSound').onclick=()=>{S.snd=!S.snd;soundLabel();if(S.snd)sfx.buy();const b=
 $('btnSave').onclick=()=>save(true);
 $('btnExport').onclick=exportSave;
 $('btnImport').onclick=importSave;
-$('btnReset').onclick=async()=>{if(await ask({text:'確定要刪除全部進度（包含菌種與圖鑑收藏）？這個動作無法復原。',ok:'刪除'})){S=fresh(0,0,S.snd);loaded=true;derive();render();hud();save(true);flashBtn($('btnReset'),'已刪除 ✓')}};
+$('btnReset').onclick=async()=>{if(await ask({text:'確定要刪除全部進度（包含菌種與圖鑑收藏）？這個動作無法復原。',ok:'刪除'})){resetTransient();S=fresh(0,0,S.snd);loaded=true;derive();render();hud();save(true);flashBtn($('btnReset'),'已刪除 ✓')}};
 setInterval(()=>save(false),10000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save(false)});
 addEventListener('pagehide',()=>save(false));

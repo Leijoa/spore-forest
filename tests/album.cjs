@@ -52,8 +52,9 @@ async function freshPage(browser, viewport = { width: 390, height: 844 }, reduce
     await page.evaluate(() => { S.collection=['moss','peach']; S.total=1e6; S.last=Date.now(); });
     await page.locator('[data-t="pre"]').evaluate(e=>e.click());
     await page.evaluate(() => { S.total=1e6; render(); });
-    await page.locator('#pre').evaluate(e=>e.click());
-    await page.locator('#mOk').evaluate(e=>e.click());
+    await page.evaluate(() => document.getElementById('pre').click());
+    await page.locator('#modal.open').waitFor();
+    await page.evaluate(() => document.getElementById('mOk').click());
     await page.waitForFunction(() => S.seeds > 0);
     assert.deepEqual(await page.evaluate(() => S.collection), ['moss','peach']); pass++;
     await page.evaluate(() => save(true));

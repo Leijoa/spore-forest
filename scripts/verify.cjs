@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, '..');
 const checks = [
   ['圖鑑與存檔', process.execPath, ['tests/album.cjs']],
   ['成就與貼紙', process.execPath, ['tests/wishes.cjs']],
+  ['森林分工與收藏', process.execPath, ['tests/forest.cjs']],
   ['差異空白檢查', 'git', ['diff', '--check']]
 ];
 let passed = 0, assertions = 0;
