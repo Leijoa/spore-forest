@@ -19,9 +19,16 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(once,{writes:0,delta:0,unique:true});checks++;
   await page.locator('[data-t="album"]').evaluate(e=>e.click());
   assert.equal(await page.locator('.achievement-row').count(),11);checks++;
+  assert.equal(await page.locator('.sticker-card').count(),11);checks++;
+  assert.equal(await page.locator('.sticker-card[data-known="true"]').count(),1);checks++;
+  await page.locator('[data-sticker="home"]').evaluate(e=>e.click());
+  assert.match(await page.locator('#stickerDetail').textContent(),/建成香菇小屋/);checks++;
+  assert.equal(await page.locator('#stickerDetail text').textContent(),'?');checks++;
   assert.ok(!await page.locator('#dotalbum').evaluate(e=>e.classList.contains('show')));checks++;
   assert.equal(await page.locator('.memory svg').count(),1);checks++;
   await page.evaluate(()=>{S.g[0]=10;S.g[1]=10;S.total=3000;hud()});
+  assert.equal(await page.locator('#stickerDetail text').count(),0);checks++;
+  assert.ok(await page.locator('[data-sticker="home"]').evaluate(e=>e.dataset.known==='true'));checks++;
   assert.ok(await page.evaluate(()=>['welcome','garden','story','home'].every(id=>S.achievements.includes(id))));checks++;
   const response=await page.evaluate(()=>{document.querySelector('#friendPortrait').click();S.stats.gold=20;hud();return document.querySelector('#friendResponse').textContent});
   assert.match(response,/留了一個位置/);checks++;
@@ -40,6 +47,17 @@ const root=path.resolve(__dirname,'..');
   assert.ok(await page.evaluate(()=>S.achievements.includes('balance')&&S.g.every(n=>n===0)));checks++;
   await page.evaluate(()=>save());await page.reload();await page.waitForFunction(()=>loaded);
   assert.equal(await page.evaluate(()=>S.achievements.length),11);checks++;
+  await page.locator('[data-t="album"]').evaluate(e=>e.click());
+  assert.equal(await page.locator('.sticker-card[data-known="true"]').count(),11);checks++;
+  const drawings=await page.evaluate(()=>ACHIEVEMENTS.map(a=>{
+   const el=document.createElement('div');el.innerHTML=stickerSvg(a.id);return el.querySelector('svg > g').innerHTML;
+  }));assert.equal(new Set(drawings).size,11);assert.ok(drawings.every(d=>d.length>100));checks++;
+  for(const id of ['castle','combo','gold','balance','moss100','rebirth','festivals']){
+   await page.locator(`[data-sticker="${id}"]`).evaluate(e=>e.click());
+   assert.equal(await page.locator('#stickerDetail svg').getAttribute('data-sticker-art'),id);checks++;
+  }
+  await page.locator('[data-sticker="home"]').focus();await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#stickerDetail svg').getAttribute('data-sticker-art'),'home');checks++;
   const roundtrip=await page.evaluate(()=>{const before=JSON.stringify(S.achievements),stats=JSON.stringify(S.stats);applySave(JSON.stringify(S),false);return JSON.stringify(S.achievements)===before&&JSON.stringify(S.stats)===stats});assert.ok(roundtrip);checks++;
   for(const bad of [{achievements:['unknown']},{stats:{combo:-1,gold:0,prestiges:0,events:[]}},{version:4}]){
    assert.ok(await page.evaluate(bad=>{const before=JSON.stringify(S);try{applySave(JSON.stringify({...S,...bad}),false);return false}catch{return JSON.stringify(S)===before}},bad));checks++;
@@ -55,6 +73,10 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(errors,[]);checks++;
   // Repeat the authoritative check after restoring a missing deduplication guard.
   const source=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const noBook=source.replace('${stickerBook()}','');assert.notEqual(noBook,source);
+  const noBookPage=await context.newPage();await noBookPage.setContent(noBook);
+  await noBookPage.evaluate(()=>{tab='album';render()});
+  assert.equal(await noBookPage.locator('.sticker-card').count(),0);checks++;await noBookPage.close();
   const mutant=source.replace("!S.achievements.includes(a.id)&&a.value()>=a.target", "a.value()>=a.target");assert.notEqual(source,mutant);
   const mutantPage=await context.newPage();await mutantPage.setContent(mutant);
   const duplicates=await mutantPage.evaluate(()=>{S=fresh();S.collection=['moss'];S.total=300;checkAchievements();checkAchievements();return S.achievements.length-new Set(S.achievements).size});assert.ok(duplicates>0);checks++;

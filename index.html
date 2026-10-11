@@ -92,6 +92,11 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 @keyframes album-wave{25%{transform:rotate(-7deg) translateY(-5px)}60%{transform:rotate(6deg)}85%{transform:rotate(-2deg)}}
 .album-response{min-height:48px;margin:12px 0;color:var(--spore)}
 .achievement-row{padding:12px 0;border-bottom:1px solid #60705a;font-size:13px;line-height:1.6}.achievement-row strong{display:block}.achievement-row span{color:var(--spore)}.achievement-row progress{display:block;width:100%;accent-color:var(--spore);margin-top:6px}.achievement-list summary{cursor:pointer;min-height:44px;padding:12px 0}.achievement-list summary:focus-visible{outline:3px solid var(--spore)}
+.sticker-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.sticker-card{min-width:0;min-height:130px;padding:8px 4px;border:1px solid #627552;border-radius:16px;background:rgba(0,0,0,.12);color:var(--lichen);font:inherit;font-size:12px;line-height:1.5;cursor:pointer}
+.sticker-card[aria-pressed=true]{border-color:var(--spore);background:rgba(242,193,78,.13)}.sticker-card small{display:block;font-size:11px;opacity:.8}
+.sticker-card svg{display:block;width:100%;max-width:96px;height:auto;margin:auto}.sticker-card:focus-visible{outline:3px solid var(--spore);outline-offset:2px}
+.sticker-detail{padding:16px;margin:12px 0;border:1px dashed var(--lilac);border-radius:18px;text-align:center}.sticker-detail svg{display:block;width:210px;max-width:100%;height:auto;margin:auto}.sticker-detail h3{font-size:17px;margin:10px 0 4px}.sticker-detail p{margin:6px 0}
 .memory{margin-top:12px;padding:12px;border:1px dashed var(--lilac);border-radius:14px}.memory h3{font-size:15px;margin:0 0 8px}.memory svg{width:90px;height:90px;display:block;margin:auto;background:#dfe8cf;border:4px solid #f2c14e;border-radius:24px;transform:rotate(-4deg)}
 @media(prefers-reduced-motion:reduce){.portrait.react svg{animation:none}}
 .item{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;background:rgba(0,0,0,.18);border-left:4px solid var(--lilac);border-radius:4px 12px 12px 4px;transition:background .3s}
@@ -243,15 +248,41 @@ const ACHIEVEMENTS=[
  {id:'festivals',n:'慶典巡禮',d:'參與過全部 5 種慶典（活動開始時記錄）',target:5,group:'刻意挑戰',value:()=>S.stats.events.length}
 ];
 let achievementUnread=false;
+let stickerId='welcome';
+function stickerSvg(id,locked=false){
+ const mushroom=(x,y,scale,cap='#c8463a')=>`<g transform="translate(${x} ${y}) scale(${scale})"><path d="M-12 0L-15 28Q0 36 15 28L12 0" fill="#fff1d2"/><path d="M-34 2Q-32-38 0-38Q32-38 34 2Q0 13-34 2" fill="${cap}"/><circle cx="-13" cy="-16" r="6" fill="#fff5dc"/><circle cx="10" cy="-24" r="5" fill="#fff5dc"/><circle cx="-6" cy="19" r="2" fill="#48372c"/><circle cx="6" cy="19" r="2" fill="#48372c"/><path d="M-3 24Q0 27 3 24" fill="none" stroke="#48372c" stroke-width="2"/></g>`;
+ const face=(x,y)=>`<g transform="translate(${x} ${y})"><circle cx="-10" cy="0" r="3" fill="#48372c"/><circle cx="10" cy="0" r="3" fill="#48372c"/><ellipse cx="-18" cy="8" rx="6" ry="3" fill="#ee9ca9"/><ellipse cx="18" cy="8" rx="6" ry="3" fill="#ee9ca9"/><path d="M-5 10Q0 16 5 10" stroke="#48372c" fill="none" stroke-width="3" stroke-linecap="round"/></g>`;
+ const star=(x,y)=>`<path transform="translate(${x} ${y})" d="M0-12L4-4L13-3L6 3L8 12L0 7L-8 12L-6 3L-13-3L-4-4Z" fill="#f2c14e" stroke="#d89735" stroke-width="2"/>`;
+ const portraitIndex=MEMORIES.findIndex(m=>m.id===id);
+ let art=portraitIndex>=0?`<svg x="5" y="0" width="190" height="190" viewBox="0 0 200 200">${friendPortrait(FRIENDS[portraitIndex]).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'')}</svg>`:'';
+ if(id==='home')art=`<rect x="52" y="95" width="96" height="67" rx="16" fill="#f0d0a1"/><path d="M31 99Q38 30 100 30Q162 30 169 99Q100 119 31 99" fill="#d96a58"/><circle cx="72" cy="66" r="12" fill="#fff1d2"/><circle cx="125" cy="58" r="9" fill="#fff1d2"/><rect x="84" y="125" width="32" height="41" rx="16" fill="#916346"/>${face(100,112)}<path d="M45 165Q25 150 33 139Q46 141 45 165M152 165Q174 148 164 140Q150 143 152 165" fill="#76a16d"/>`;
+ if(id==='castle')art=`<rect x="41" y="90" width="118" height="74" rx="8" fill="#dbc7ee"/><rect x="35" y="67" width="33" height="93" rx="6" fill="#af91cf"/><rect x="132" y="67" width="33" height="93" rx="6" fill="#af91cf"/><path d="M26 72L51 39L77 72M123 72L149 39L175 72" fill="#d96667"/><path d="M77 80L79 53L91 64L100 42L109 64L122 53L124 80Z" fill="#f2c14e" stroke="#bc8435" stroke-width="3"/><path d="M86 164V136Q100 114 114 136V164" fill="#84689b"/>${face(100,102)}`;
+ if(id==='combo')art=`<path d="M49 145Q29 131 35 109Q24 84 48 72Q58 43 90 54Q119 33 139 59Q169 60 168 91Q188 119 162 137Q134 164 105 147Q73 166 49 145" fill="#f3dbe8"/>${face(90,112)}<path d="M110 100V61L147 52V91M110 69L147 60" fill="none" stroke="#9764b2" stroke-width="8" stroke-linejoin="round"/><ellipse cx="101" cy="101" rx="13" ry="8" fill="#9764b2"/><ellipse cx="138" cy="93" rx="13" ry="8" fill="#9764b2"/>${star(47,48)}${star(160,149)}`;
+ if(id==='gold')art=`${mushroom(83,104,1.45,'#edbb4c')}<circle cx="135" cy="113" r="27" fill="#d6efe6" fill-opacity=".65" stroke="#886747" stroke-width="8"/><path d="M154 133L174 157" stroke="#886747" stroke-width="13" stroke-linecap="round"/>${star(41,53)}${star(147,46)}`;
+ if(id==='balance')art=`<path d="M32 143Q100 175 168 143" fill="none" stroke="#7da774" stroke-width="10" stroke-linecap="round"/>${['#c8463a','#e69954','#e3bc50','#7aa57a','#62a3b1','#af8bd0','#e398b7'].map((c,i)=>mushroom(45+(i%4)*36,80+Math.floor(i/4)*55,.5,c)).join('')}${star(158,31)}`;
+ if(id==='moss100')art=`<ellipse cx="100" cy="138" rx="76" ry="30" fill="#80ac74"/><ellipse cx="100" cy="127" rx="73" ry="27" fill="#b0cd89"/>${mushroom(62,111,.7)}${mushroom(116,105,.9,'#ed946d')}${mushroom(143,129,.45,'#c57c9c')}<path d="M38 150L41 127M46 151L51 133M84 154L88 137M100 151L101 135M155 149L162 137" stroke="#5b8859" stroke-width="4" stroke-linecap="round"/>`;
+ if(id==='rebirth')art=`<path d="M46 76Q26 58 44 41Q48 20 71 31Q96 13 114 33Q145 17 159 42Q183 62 163 76Z" fill="#d7deef"/>${face(100,50)}<path d="M61 88L57 101M101 88L97 101M143 88L139 101" stroke="#ad97d3" stroke-width="6" stroke-linecap="round"/><path d="M40 163Q100 178 160 163" stroke="#86a773" stroke-width="8" fill="none" stroke-linecap="round"/>${[56,100,144].map(x=>`<path d="M${x} 165V130" stroke="#61875c" stroke-width="4"/><path d="M${x} 145Q${x-27} 142 ${x-18} 123Q${x} 121 ${x} 145M${x} 139Q${x+25} 134 ${x+18} 115Q${x} 116 ${x} 139" fill="#8ebd7c"/>`).join('')}`;
+ if(id==='festivals')art=`<path d="M23 43Q100 75 177 43" stroke="#7b6652" stroke-width="3" fill="none"/>${[38,65,92,119,146].map((x,i)=>`<path d="M${x} ${48+(i===0||i===4?0:7)}L${x+11} ${77+(i===0||i===4?0:7)}L${x+21} ${52+(i===0||i===4?0:7)}Z" fill="${['#d96a58','#e5ba50','#8cab77','#af91cf','#e798b3'][i]}"/>`).join('')}${mushroom(100,132,.9,'#c879a1')}${star(44,110)}${star(157,112)}<path d="M32 143L25 155M40 143L44 158M157 146L153 160M165 141L179 150" stroke="#d4a955" stroke-width="4" stroke-linecap="round"/>`;
+ return `<svg viewBox="0 0 200 200" aria-hidden="true" data-sticker-art="${id}"><rect x="9" y="9" width="182" height="182" rx="48" fill="#fff0d6" stroke="${locked?'#889786':'#e8be66'}" stroke-width="6"/><g ${locked?'style="filter:brightness(0);opacity:.18"':''}>${art}</g>${locked?'<circle cx="100" cy="100" r="22" fill="#627552"/><text x="100" y="110" text-anchor="middle" fill="#e4ead8" font-size="28">?</text>':''}</svg>`;
+}
+function stickerBook(){return `<section aria-label="貼紙收藏冊"><h2>貼紙收藏冊</h2><p>點貼紙放大看；灰色剪影是還沒解鎖的收藏。</p><div class="sticker-grid">${ACHIEVEMENTS.map(a=>`<button class="sticker-card" data-sticker="${a.id}" aria-pressed="${a.id===stickerId}"></button>`).join('')}</div><div class="sticker-detail" id="stickerDetail"></div></section>`}
+function updateStickerBook(){
+ if(!$('stickerDetail'))return;
+ for(const a of ACHIEVEMENTS){const card=$('panel').querySelector(`[data-sticker="${a.id}"]`),done=S.achievements.includes(a.id);card.setAttribute('aria-pressed',String(a.id===stickerId));card.setAttribute('aria-label',a.n+'，'+(done?'已收藏，查看貼紙':'尚未解鎖，查看條件'));
+  if(card.dataset.known!==String(done)){card.dataset.known=String(done);card.innerHTML=stickerSvg(a.id,!done)+a.n+`<small>${done?'已收藏':'尚未解鎖'}</small>`}}
+ const a=ACHIEVEMENTS.find(a=>a.id===stickerId),done=S.achievements.includes(a.id),detail=$('stickerDetail'),key=a.id+'|'+done;
+ if(detail.dataset.key!==key){detail.dataset.key=key;detail.innerHTML=stickerSvg(a.id,!done)+`<h3>${a.n}</h3><p>${a.d}</p><p>${done?'這張貼紙已收藏，會陪你走過每一次孢子雨。':'達成條件後自動揭露，不需接受任務或領獎。'}</p>`}
+}
 function checkAchievements(){
  const unlocked=ACHIEVEMENTS.filter(a=>!S.achievements.includes(a.id)&&a.value()>=a.target);
  if(unlocked.length){S.achievements.push(...unlocked.map(a=>a.id));achievementUnread=tab!=='album';save();if(tab==='album')updateAchievementUI()}
  $('dotalbum').classList.toggle('show',achievementUnread);
  if(tab==='album')updateAchievementUI();
 }
-function achievementList(){return `<section aria-label="成就收藏"><h2>森林成就</h2><p id="achievementCount" role="status" aria-live="polite"></p><p>自動追蹤、直接收藏，不用接受或領獎。完成後貼紙與回憶跨轉生保留。</p>${['自然成長','刻意挑戰'].map(group=>`<details class="achievement-list" open><summary>${group}</summary>${ACHIEVEMENTS.filter(a=>a.group===group).map(a=>`<div class="achievement-row"><strong>${a.n}</strong><div>${a.d}</div><span id="ach-${a.id}"></span><progress id="bar-${a.id}" aria-label="${a.n}進度" max="${a.target}"></progress></div>`).join('')}</details>`).join('')}</section>`}
+function achievementList(){return `${stickerBook()}<section aria-label="成就收藏"><h2>森林成就</h2><p id="achievementCount" role="status" aria-live="polite"></p><p>自動追蹤、直接收藏，不用接受或領獎。完成後貼紙與回憶跨轉生保留。</p>${['自然成長','刻意挑戰'].map(group=>`<details class="achievement-list" open><summary>${group}</summary>${ACHIEVEMENTS.filter(a=>a.group===group).map(a=>`<div class="achievement-row"><strong>${a.n}</strong><div>${a.d}</div><span id="ach-${a.id}"></span><progress id="bar-${a.id}" aria-label="${a.n}進度" max="${a.target}"></progress></div>`).join('')}</details>`).join('')}</section>`}
 function updateAchievementUI(){
  const count=$('achievementCount');if(!count)return;
+ updateStickerBook();
  const label=`已收藏 ${S.achievements.length}／${ACHIEVEMENTS.length} 枚`;if(count.textContent!==label)count.textContent=label;
  for(const a of ACHIEVEMENTS){const done=S.achievements.includes(a.id),value=Math.min(a.target,a.value());$('ach-'+a.id).textContent=done?'✓ 貼紙已收藏':`${Math.floor(value)}／${a.target}`;$('bar-'+a.id).value=done?a.target:value}
  const memory=$('albumMemory');if(memory&&S.collection.includes(albumId)){const i=FRIENDS.findIndex(f=>f.id===albumId),done=S.achievements.includes(MEMORIES[i].id);if(memory.dataset.done!==String(done)){memory.dataset.done=String(done);memory.innerHTML=memoryCard(i)}}
@@ -1128,6 +1159,7 @@ function render(){
 }
 $('panel').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.sticker){stickerId=b.dataset.sticker;updateStickerBook();return}
   if(b.dataset.friend){albumId=b.dataset.friend;renderAlbum();$('panel').querySelector(`[data-friend="${albumId}"]`).focus({preventScroll:true});return}
   if(b.id==='friendPortrait'){
     if(performance.now()-albumReactAt<2000)return;albumReactAt=performance.now();

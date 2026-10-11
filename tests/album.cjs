@@ -93,4 +93,4 @@ async function freshPage(browser, viewport = { width: 390, height: 844 }, reduce
     console.log(`PASS ${pass}; FAIL 0; legacy regression assertions: 2 reproduced`);
     await oldPage.close();
   } finally { await browser.close(); }
-})().catch(e => { console.error(`FAIL: ${e.message}`); process.exitCode = 1; });
+})().catch(e => { console.error(e); process.exitCode = 1; });
