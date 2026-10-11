@@ -78,6 +78,20 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .tabs button.on{background:var(--lichen);color:var(--moss)}
 .tabs button .dot{position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--spore);display:none}
 .tabs button .dot.show{display:block}
+.album{padding:14px;background:rgba(0,0,0,.18);border-radius:18px}
+.album h2{font-size:19px;margin:0 0 6px}.album p{font-size:13px;line-height:1.7}
+.album-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.album-list button{min-height:100px;padding:8px 3px;border:1px solid var(--moss2);border-radius:14px;background:rgba(0,0,0,.12);color:var(--lichen);font:inherit;font-size:13px}
+.album-list button[aria-pressed=true]{border-color:var(--spore);background:rgba(242,193,78,.12)}
+.album-list svg{display:block;width:64px;height:64px;margin:auto}.album-list small{display:block;font-size:11px;opacity:.75}
+.album button:focus-visible{outline:3px solid var(--spore);outline-offset:3px}
+.portrait{display:block;position:relative;width:100%;min-height:200px;border:0;border-radius:16px;background:radial-gradient(ellipse at 50% 70%,#48624a,rgba(0,0,0,.12) 75%);color:var(--lichen);font:inherit;padding:12px;cursor:pointer}
+.portrait svg{width:190px;height:190px;max-width:100%;display:block;margin:auto}
+.portrait span{display:block;font-size:12px}.portrait:disabled{cursor:default}
+.portrait.react svg{animation:album-wave .65s ease-in-out}
+@keyframes album-wave{25%{transform:rotate(-7deg) translateY(-5px)}60%{transform:rotate(6deg)}85%{transform:rotate(-2deg)}}
+.album-response{min-height:48px;margin:12px 0;color:var(--spore)}
+@media(prefers-reduced-motion:reduce){.portrait.react svg{animation:none}}
 .item{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;background:rgba(0,0,0,.18);border-left:4px solid var(--lilac);border-radius:4px 12px 12px 4px;transition:background .3s}
 .item.flash{background:rgba(242,193,78,.35)}
 .item .ico{font-size:26px;width:34px;text-align:center;display:inline-block}
@@ -158,6 +172,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
     <button class="on" data-t="gen">菌群<span class="dot" id="dotgen"></span></button>
     <button data-t="up">強化<span class="dot" id="dotup"></span></button>
     <button data-t="pre">孢子雨<span class="dot" id="dotpre"></span></button>
+    <button data-t="album">圖鑑</button>
   </div>
   <div id="panel"></div>
   <div class="savebar">
@@ -199,8 +214,37 @@ const UPS=[
  {id:'g5',n:'王冠傳承',d:'古老菌王 ×2',c:8e7,req:s=>s.g[5]>=10,f:s=>s.gm[5]*=2},
  {id:'g6',n:'銀河黴菌',d:'星際孢囊 ×2',c:1.5e9,req:s=>s.g[6]>=10,f:s=>s.gm[6]*=2},
 ];
-function fresh(seeds=0,best=0,snd=true,peak=0){return{sp:0,total:0,g:GENS.map(()=>0),bought:[],seeds,best,last:Date.now(),ms:0,snd,peak}}
+function fresh(seeds=0,best=0,snd=true,peak=0){return{version:1,collection:[],sp:0,total:0,g:GENS.map(()=>0),bought:[],seeds,best,last:Date.now(),ms:0,snd,peak}}
 let S=fresh(),D={},tab='gen';
+const FRIENDS=[
+ {id:'moss',n:'苔苔',kind:'小香菇',at:3,t:0,cap:'#e0573f',spots:'#fff0d2',trait:'害羞的小鄰居',desc:'喜歡在苔蘚旁找最柔軟的位置。每次看見你，都會偷偷揮一下手。',line:'你來啦……我留了一個位置給你。',hint:'菌群總數達 3'},
+ {id:'peach',n:'桃桃',kind:'女香菇',at:8,t:0,cap:'#ec8fb0',spots:'#ffe5f2',trait:'把好心情分給大家',desc:'喜歡唱歌和迎接新朋友，走到哪裡都帶著一點小小的熱鬧。',line:'今天也要一起把森林變熱鬧！',hint:'菌群總數達 8'},
+ {id:'elder',n:'慢慢',kind:'老香菇',at:16,t:1,cap:'#a68f78',spots:'#e8dcc7',trait:'慢吞吞的森林故事家',desc:'總是散步得很慢，卻記得每一棵樹的故事。最喜歡和朋友一起坐坐。',line:'別急，長大要一點點時間。',hint:'菌群總數達 16，並建成香菇小屋'}
+];
+let albumId='moss',albumReactAt=-Infinity;
+function friendPortrait(f,locked=false){
+ const older=f.id==='elder',pink=f.id==='peach';
+ return `<svg viewBox="0 0 200 200" aria-hidden="true"><g ${locked?'fill="#17291f"':''}>
+ <ellipse cx="100" cy="182" rx="56" ry="8" fill="${locked?'#17291f':'#17291f66'}"/>
+ <path d="M75 103 Q68 140 76 170 Q100 183 124 170 Q132 140 125 103Z" fill="${locked?'#17291f':'#efe6cf'}"/>
+ <path d="M21 109 Q28 ${older?'49':'27'} 100 ${older?'43':'25'} Q172 ${older?'49':'27'} 179 109 Q100 130 21 109Z" fill="${locked?'#17291f':f.cap}"/>
+ ${locked?'':`<ellipse cx="66" cy="74" rx="12" ry="10" fill="${f.spots}"/><ellipse cx="121" cy="58" rx="10" ry="8" fill="${f.spots}"/><ellipse cx="143" cy="94" rx="11" ry="8" fill="${f.spots}"/>
+ <ellipse cx="76" cy="148" rx="9" ry="5" fill="#f19ba5"/><ellipse cx="124" cy="148" rx="9" ry="5" fill="#f19ba5"/>
+ ${older?'<path d="M81 139 Q86 134 91 139 M109 139 Q114 134 119 139" stroke="#48372c" stroke-width="3" fill="none" stroke-linecap="round"/>':'<ellipse cx="86" cy="139" rx="4" ry="5" fill="#48372c"/><ellipse cx="114" cy="139" rx="4" ry="5" fill="#48372c"/>'}
+ <path d="M92 153 Q100 161 108 153" stroke="#48372c" stroke-width="3" fill="none" stroke-linecap="round"/>
+ ${pink?'<path d="M150 86 Q135 67 139 97 Q150 98 161 101 Q173 74 150 86" fill="#b79ad9"/><circle cx="150" cy="92" r="5" fill="#f2c14e"/>':''}
+ ${older?'<path d="M130 162 L137 132 Q141 124 146 131" fill="none" stroke="#7b5639" stroke-width="5" stroke-linecap="round"/>':''}`}
+ </g>${locked?'<text x="100" y="150" fill="#a9b9a4" font-size="32" text-anchor="middle">?</text>':''}</svg>`;
+}
+function renderAlbum(){
+ const f=FRIENDS.find(f=>f.id===albumId),known=S.collection.includes(f.id);
+ $('panel').innerHTML=`<section class="album" aria-label="菇菇圖鑑"><h2>森林裡的朋友</h2><p>已遇見 ${S.collection.length}／${FRIENDS.length} 位 · 收藏會陪你走過每一次孢子雨</p><div class="album-list">${FRIENDS.map(c=>{const seen=S.collection.includes(c.id);return `<button data-friend="${c.id}" aria-pressed="${c.id===albumId}">${friendPortrait(c,!seen)}${seen?c.n:'未遇見'}<small>${seen?c.kind:'神祕的菇菇'}</small></button>`}).join('')}</div><h2>${known?f.n+' · '+f.trait:'一位還沒遇見的朋友'}</h2><button class="portrait" id="friendPortrait" ${known?'':'disabled'} aria-label="${known?'和'+f.n+'打招呼':'尚未解鎖的菇菇剪影'}">${friendPortrait(f,!known)}<span>${known?'點一下，和我打招呼':'繼續養大森林，就能遇見我'}</span></button><p>${known?f.desc:'解鎖條件：'+f.hint}</p><p class="album-response" id="friendResponse" role="status" aria-live="polite">${known?'「很高興在這裡遇見你。」':'目前人口：'+popN()+' · 聚落：'+TIERS[tierOf(S.g)].n}</p><p>願望與回憶貼紙將在後續更新加入。</p></section>`;
+}
+function unlockFriends(){
+ let changed=false;
+ for(const f of FRIENDS){if(!S.collection.includes(f.id)&&popN()>=f.at&&tierOf(S.g)>=f.t){S.collection.push(f.id);changed=true}}
+ if(changed){if(tab==='album')renderAlbum();save()}
+}
 let tapLog=[],combo=0,lastTap=0,buffMul=1,buffEnd=0,tapBuff=1,tapBuffEnd=0;
 function derive(){
   D={tapM:1,tapPct:0,all:1,gm:GENS.map(()=>1),crit:0.05,goldFreq:1};
@@ -341,6 +385,7 @@ const CAPS=[30,12,12,12,8,4,6];
 let ent=GENS.map(()=>[]),gSpores=[],smoke=[],walkers=[],gTier=0,gTierReady=false,castleBorn=0;
 const rnd=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 function syncGarden(){
+  unlockFriends();
   GENS.forEach((g,i)=>{
     const want=Math.min(S.g[i],CAPS[i]);
     while(ent[i].length<want){const k=ent[i].length;ent[i].push({born:performance.now(),a:rnd(i*50+k+1),b:rnd(i*50+k+7.3),c:rnd(i*50+k+13.9)})}
@@ -1025,6 +1070,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
 const visibleGens=()=>GENS.map((g,i)=>i===0||S.g[i-1]>0||S.total>=g.base*0.5);
 const availUps=()=>UPS.filter(u=>!S.bought.includes(u.id)&&(!u.req||u.req(S)));
 function render(){
+  if(tab==='album'){renderAlbum();return}
   const P=$('panel');let h='';const vis=visibleGens();
   if(tab==='gen'){
     GENS.forEach((g,i)=>{
@@ -1043,6 +1089,11 @@ function render(){
 }
 $('panel').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.friend){albumId=b.dataset.friend;renderAlbum();$('panel').querySelector(`[data-friend="${albumId}"]`).focus({preventScroll:true});return}
+  if(b.id==='friendPortrait'){
+    if(performance.now()-albumReactAt<2000)return;albumReactAt=performance.now();
+    const f=FRIENDS.find(f=>f.id===albumId);$('friendResponse').textContent='「'+f.line+'」';retrigger(b,'react');sfx.click();return;
+  }
   const r=b.getBoundingClientRect(),bx=r.left+r.width/2,by=r.top+r.height/2;
   if(b.dataset.g!==undefined){const i=+b.dataset.g,c=cost(i);if(S.sp>=c){S.sp-=c;S.g[i]++;
     sfx.buy();burst(bx,by,14,['#f2c14e','#dfe8cf'],4);render();
@@ -1056,7 +1107,7 @@ $('panel').addEventListener('click',e=>{
 async function doPrestige(){const g=seedGain();if(g<1)return;
     if(!await ask({text:`確定要降下孢子雨？會獲得 ${g} 顆菌種，孢子、菌群與強化會重置。`,ok:'降下孢子雨'}))return;
     const g2=seedGain();
-    S=fresh(S.seeds+g2,Math.max(S.best,S.total),S.snd,S.peak);derive();
+    const collection=S.collection.slice();S=fresh(S.seeds+g2,Math.max(S.best,S.total),S.snd,S.peak);S.collection=collection;derive();
     banner(`孢子雨！+${g2} 菌種`);sfx.milestone();flash();shake();
     for(let k=0;k<6;k++)setTimeout(()=>burst(Math.random()*innerWidth,-10,30,['#b79ad9','#dfe8cf','#f2c14e'],3,0.25),k*150);
     render();hud();save()}
@@ -1103,7 +1154,7 @@ setInterval(()=>{
   $('comboTxt').textContent=combo>=5?`連擊 ${combo}　×${comboMul().toFixed(2)}`:'';
   earn(pps()/10);hud();
   const n=visibleGens().filter(Boolean).length+availUps().length;
-  if(n!==lastUnlock){lastUnlock=n;render()}
+  if(n!==lastUnlock){lastUnlock=n;if(tab!=='album')render()}
 },100);
 
 /* ---------- 存檔 ---------- */
@@ -1128,16 +1179,24 @@ async function save(manual){
   else{setStatus('此環境無法自動存檔，請用「匯出存檔碼」備份');if(manual){toast('存檔失敗，請改用匯出存檔碼');flashBtn($('btnSave'),'存檔失敗','fail')}}
 }
 function applySave(str,offline){
-  const o=JSON.parse(str);S=Object.assign(fresh(),o);
-  while(S.g.length<GENS.length)S.g.push(0);
-  if(S.ms===undefined)S.ms=Math.max(0,Math.floor(Math.log10(Math.max(S.total,1))/3));
+  const o=JSON.parse(str);
+  if(!o||typeof o!=='object'||Array.isArray(o)||o.version!==undefined&&o.version!==1)throw Error('不支援的存檔');
+  const next=Object.assign(fresh(),o);
+  for(const k of ['sp','total','seeds','best','last','ms','peak']){if(!Number.isFinite(next[k])||next[k]<0)throw Error('無效數值')}
+  if(typeof next.snd!=='boolean'||!Array.isArray(next.g)||next.g.length>GENS.length||!next.g.every(n=>Number.isSafeInteger(n)&&n>=0))throw Error('無效菌群');
+  if(!Array.isArray(next.bought)||!next.bought.every(id=>UPS.some(u=>u.id===id))||new Set(next.bought).size!==next.bought.length)throw Error('無效強化');
+  if(!Array.isArray(next.collection)||!next.collection.every(id=>FRIENDS.some(f=>f.id===id)))throw Error('無效圖鑑');
+  next.collection=[...new Set(next.collection)];next.version=1;
+  while(next.g.length<GENS.length)next.g.push(0);
+  if(o.ms===undefined)next.ms=Math.max(0,Math.floor(Math.log10(Math.max(next.total,1))/3));
+  S=next;
   derive();gTier=tierOf(S.g);
-  if(offline){const sec=Math.min((Date.now()-S.last)/1000,8*3600);const gain=basePps()*sec*0.5;
+  if(offline){const sec=Math.max(0,Math.min((Date.now()-S.last)/1000,8*3600));const gain=basePps()*sec*0.5;
     if(gain>1){earn(gain);toast(`離線期間菌群收集了 ${fmt(gain)} 孢子`)}}
   soundLabel();render();hud();
 }
 async function load(){
-  try{const v=await rawGet();if(v)applySave(v,true)}catch(e){toast('讀取存檔失敗')}
+  try{const v=await rawGet();if(v)applySave(v,true)}catch(e){toast('讀取存檔失敗，原存檔已保留，請匯入備份');setStatus('原存檔已保留；匯入有效備份或確認刪除進度後恢復存檔');gTierReady=true;scheduleGold();return}
   loaded=true;gTier=tierOf(S.g);gTierReady=true;save();scheduleGold();
 }
 function exportSave(){
@@ -1148,14 +1207,14 @@ function exportSave(){
 }
 async function importSave(){
   const code=await ask({text:'貼上存檔碼（目前進度會被覆蓋）：',input:true,ok:'載入'});if(!code)return;
-  try{applySave(decodeURIComponent(escape(atob(code.trim()))),false);save(true);toast('存檔已載入');flashBtn($('btnImport'),'已載入 ✓')}catch(e){toast('存檔碼格式錯誤')}
+  try{applySave(decodeURIComponent(escape(atob(code.trim()))),false);loaded=true;save(true);toast('存檔已載入');flashBtn($('btnImport'),'已載入 ✓')}catch(e){toast('存檔碼格式錯誤，原進度已保留')}
 }
 function soundLabel(){$('btnSound').textContent='音效：'+(S.snd?'開':'關')}
 $('btnSound').onclick=()=>{S.snd=!S.snd;soundLabel();if(S.snd)sfx.buy();const b=$('btnSound');b.classList.add('done');setTimeout(()=>b.classList.remove('done'),500);toast(S.snd?'音效已開啟':'音效已關閉');save()};
 $('btnSave').onclick=()=>save(true);
 $('btnExport').onclick=exportSave;
 $('btnImport').onclick=importSave;
-$('btnReset').onclick=async()=>{if(await ask({text:'確定要刪除全部進度（包含菌種）？這個動作無法復原。',ok:'刪除'})){S=fresh(0,0,S.snd);derive();render();hud();save(true);flashBtn($('btnReset'),'已刪除 ✓')}};
+$('btnReset').onclick=async()=>{if(await ask({text:'確定要刪除全部進度（包含菌種與圖鑑收藏）？這個動作無法復原。',ok:'刪除'})){S=fresh(0,0,S.snd);loaded=true;derive();render();hud();save(true);flashBtn($('btnReset'),'已刪除 ✓')}};
 setInterval(()=>save(false),10000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save(false)});
 addEventListener('pagehide',()=>save(false));

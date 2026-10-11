@@ -13,3 +13,13 @@
 
 ## 本機執行
 單一 `index.html` 檔案，不需要建置，直接用瀏覽器開啟即可。
+
+## 菇菇圖鑑
+「圖鑑」分頁可查看苔苔、桃桃、慢慢的大圖、個性與解鎖條件。點大圖可以打招呼；遇見後收藏跨轉生保留。願望與回憶貼紙將在後續更新加入。
+
+## 開發文件
+- [現況規格書](docs/GAME_SPEC.md)
+- [擴充提案](docs/EXPANSION_PLAN.md)
+
+## 圖鑑檢查
+安裝 Playwright 並備有 Microsoft Edge 後，執行 `node tests/album.cjs`。也可透過 `PLAYWRIGHT_MODULE` 指定 Playwright 模組位置。檢查包括解鎖、互動、舊存檔、轉生保留、刪除與壞檔保護。
