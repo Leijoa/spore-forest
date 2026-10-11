@@ -91,6 +91,13 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .portrait.react svg{animation:album-wave .65s ease-in-out}
 @keyframes album-wave{25%{transform:rotate(-7deg) translateY(-5px)}60%{transform:rotate(6deg)}85%{transform:rotate(-2deg)}}
 .album-response{min-height:48px;margin:12px 0;color:var(--spore)}
+.wish-card{margin:8px 0;padding:10px 12px;background:rgba(0,0,0,.2);border:1px solid #627552;border-radius:14px;font-size:13px;line-height:1.6}
+.wish-card summary{cursor:pointer;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}.wish-card summary span{color:var(--spore)}
+.wish-card summary::after{content:'⌄';margin-left:auto}.wish-card[open] summary::after{content:'⌃'}
+.wish-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.wish-actions button{min-height:44px;flex:1;padding:8px;border:1px solid var(--lichen);border-radius:10px;background:var(--lichen);color:var(--moss);font:inherit}
+.wish-actions button:disabled{opacity:.5}.wish-card button:focus-visible,.wish-card summary:focus-visible{outline:3px solid var(--spore);outline-offset:2px}
+.wish-card p{margin:8px 0}.wish-card progress{width:100%;accent-color:var(--spore)}
+.memory{margin-top:12px;padding:12px;border:1px dashed var(--lilac);border-radius:14px}.memory h3{font-size:15px;margin:0 0 8px}.memory svg{width:90px;height:90px;display:block;margin:auto;background:#dfe8cf;border:4px solid #f2c14e;border-radius:24px;transform:rotate(-4deg)}
 @media(prefers-reduced-motion:reduce){.portrait.react svg{animation:none}}
 .item{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;background:rgba(0,0,0,.18);border-left:4px solid var(--lilac);border-radius:4px 12px 12px 4px;transition:background .3s}
 .item.flash{background:rgba(242,193,78,.35)}
@@ -168,6 +175,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
     <div class="combo"><div class="txt" id="comboTxt"></div><div class="bar"><div class="fill" id="comboFill"></div></div></div>
   </div>
   <div class="tierchip" id="tierChip" aria-label="聚落升級進度"></div>
+  <div id="wishCard"></div>
   <div class="tabs">
     <button class="on" data-t="gen">菌群<span class="dot" id="dotgen"></span></button>
     <button data-t="up">強化<span class="dot" id="dotup"></span></button>
@@ -214,7 +222,7 @@ const UPS=[
  {id:'g5',n:'王冠傳承',d:'古老菌王 ×2',c:8e7,req:s=>s.g[5]>=10,f:s=>s.gm[5]*=2},
  {id:'g6',n:'銀河黴菌',d:'星際孢囊 ×2',c:1.5e9,req:s=>s.g[6]>=10,f:s=>s.gm[6]*=2},
 ];
-function fresh(seeds=0,best=0,snd=true,peak=0){return{version:1,collection:[],sp:0,total:0,g:GENS.map(()=>0),bought:[],seeds,best,last:Date.now(),ms:0,snd,peak}}
+function fresh(seeds=0,best=0,snd=true,peak=0){return{version:2,collection:[],wishes:[null,null,null],sp:0,total:0,g:GENS.map(()=>0),bought:[],seeds,best,last:Date.now(),ms:0,snd,peak}}
 let S=fresh(),D={},tab='gen';
 const FRIENDS=[
  {id:'moss',n:'苔苔',kind:'小香菇',at:3,t:0,cap:'#e0573f',spots:'#fff0d2',trait:'害羞的小鄰居',desc:'喜歡在苔蘚旁找最柔軟的位置。每次看見你，都會偷偷揮一下手。',line:'你來啦……我留了一個位置給你。',hint:'菌群總數達 3'},
@@ -222,6 +230,67 @@ const FRIENDS=[
  {id:'elder',n:'慢慢',kind:'老香菇',at:16,t:1,cap:'#a68f78',spots:'#e8dcc7',trait:'慢吞吞的森林故事家',desc:'總是散步得很慢，卻記得每一棵樹的故事。最喜歡和朋友一起坐坐。',line:'別急，長大要一點點時間。',hint:'菌群總數達 16，並建成香菇小屋'}
 ];
 let albumId='moss',albumReactAt=-Infinity;
+const WISHES=[
+ {title:'小小歡迎會',earn:300,gi:0,buy:3,memory:'第一次一起迎接鄰居',story:'苔苔把最柔軟的苔蘚留給新鄰居，也留了一個位置給你。',thanks:'謝謝你……下次也一起坐吧。'},
+ {title:'門口的小花園',earn:1000,gi:1,buy:2,memory:'門口長出了好心情',story:'桃桃一邊哼歌，一邊和你整理門口的小花園。',thanks:'看！這裡變得更熱鬧了！'},
+ {title:'大家一起坐坐',earn:3000,gi:2,buy:2,memory:'慢慢說的森林故事',story:'慢慢邀大家坐下，把森林的故事一點點說給你聽。',thanks:'有朋友在，慢慢來也很好。'}
+];
+const currentWish=()=>S.wishes.findIndex(w=>!w||w.status!=='claimed');
+const wishTarget=(i,path)=>WISHES[i][path];
+let wishViewKey='',wishActionPending=false;
+function renderWish(force=false){
+ const i=currentWish(),w=i<0?null:S.wishes[i],known=i>=0&&S.collection.includes(FRIENDS[i].id);
+ const key=i+'|'+known+'|'+(w?w.status+':'+w.path:'')+'|'+visibleGens().join(',');
+ if(force||key!==wishViewKey){
+  const open=$('wishDetails')?.open||false;wishViewKey=key;
+  if(i<0){$('wishCard').innerHTML='<div class="wish-card">♡ 三個願望都完成了！到圖鑑看看一起留下的回憶。</div>';return}
+  const f=FRIENDS[i],def=WISHES[i];
+  let body=!known?`<p>下一個願望來自一位新朋友。${f.hint}後，就能聽聽牠的心願。</p>`:
+   !w?`<p>${f.n}想和你一起準備「${def.title}」。選一種幫忙方式，接受後才開始計算；沒有時間限制。</p><div class="wish-actions"><button data-wish-route="earn">新賺 ${def.earn} 孢子</button><button data-wish-route="buy" ${visibleGens()[def.gi]?'':'disabled'}>新買 ${def.buy} 個${GENS[def.gi].n}</button></div><p>完成後可選 ${def.earn/5} 孢子或專屬貼紙，並永久留下回憶。獎勵只能選一次。</p>`:
+   w.status==='active'?`<p>接受後${w.path==='earn'?'新賺孢子':'新買'+GENS[def.gi].n}：<span id="wishProgressText"></span></p><progress id="wishProgress" aria-label="願望完成進度"></progress><div class="wish-actions"><button data-wish-cancel>取消願望</button></div><p>沒有期限；取消或未完成時轉生會清除本次進度，可重新接受。</p>`:
+   `<p>${f.n}：「${def.thanks}」</p><p>願望完成！選一份獎勵，這是一次性選擇。兩種選擇都會留下「${def.memory}」回憶。</p><div class="wish-actions"><button data-wish-reward="spores">取得 ${def.earn/5} 孢子</button><button data-wish-reward="sticker">收藏 ${f.n}貼紙</button></div>`;
+  $('wishCard').innerHTML=`<details class="wish-card" id="wishDetails" ${open?'open':''}><summary>${known?f.n+'的願望 · '+def.title:'菇菇的願望'} <span id="wishSummary"></span></summary>${body}</details>`;
+ }
+ if(i>=0){const def=WISHES[i],summary=$('wishSummary');if(summary)summary.textContent=!known?'等待新朋友':!w?'選一種幫忙方式':w.status==='ready'?'完成，等你領取':`${Math.floor(w.progress)}／${wishTarget(i,w.path)}`;
+  if(w?.status==='active'){const p=$('wishProgress');if(p){p.max=wishTarget(i,w.path);p.value=w.progress;$('wishProgressText').textContent=`${Math.floor(w.progress)}／${p.max}`}}}
+}
+function advanceWish(path,amount,gi){
+ const i=currentWish();if(i<0)return;
+ const w=S.wishes[i];if(!w||w.status!=='active'||w.path!==path||path==='buy'&&WISHES[i].gi!==gi)return;
+ const target=wishTarget(i,path);w.progress=Math.min(target,w.progress+amount);
+ if(w.progress>=target){w.status='ready';save();toast(FRIENDS[i].n+'的願望完成了！')}
+ renderWish();
+}
+function memoryCard(i){
+ const w=S.wishes[i],f=FRIENDS[i],def=WISHES[i];
+ return w?.status==='claimed'?`<section class="memory"><h3>♡ ${def.memory}</h3>${w.reward==='sticker'?friendPortrait(f):''}<p>${def.story}</p><p>${w.reward==='sticker'?'已收藏專屬貼紙 · 跨轉生保留':'當時選擇了孢子獎勵 · 回憶跨轉生保留'}</p></section>`:'<section class="memory"><h3>還沒寫下的回憶</h3><p>完成這位朋友的願望並選好獎勵，就能把故事留在這裡。</p></section>';
+}
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(wishActionPending)return;
+ const i=currentWish();if(i<0)return;
+ if(b.dataset.wishRoute){
+  const path=b.dataset.wishRoute;if(!['earn','buy'].includes(path)||S.wishes[i]||!S.collection.includes(FRIENDS[i].id)||path==='buy'&&!visibleGens()[WISHES[i].gi])return;
+  S.wishes[i]={path,progress:0,status:'active',reward:null};renderWish(true);save();return;
+ }
+ if(b.hasAttribute('data-wish-cancel')){
+  if(S.wishes[i]?.status!=='active')return;
+  wishActionPending=true;let confirmed;
+  try{confirmed=await ask({text:'取消願望會清除這次進度，之後可以重新選擇幫忙方式。',ok:'取消願望'})}finally{wishActionPending=false}
+  if(confirmed){
+   if(currentWish()===i&&S.wishes[i]?.status==='active'){S.wishes[i]=null;renderWish(true);save()}}
+ }
+ if(b.dataset.wishReward){
+  const reward=b.dataset.wishReward;if(!['spores','sticker'].includes(reward)||S.wishes[i]?.status!=='ready')return;
+  wishActionPending=true;let confirmed;
+  try{confirmed=await ask({text:`確定選${reward==='sticker'?'專屬貼紙':WISHES[i].earn/5+' 孢子'}？這份獎勵只能選一次，另一份將無法取得。回憶都會保留。`,ok:'留下這份回憶'})}finally{wishActionPending=false}
+  if(!confirmed)return;
+  if(currentWish()!==i||S.wishes[i]?.status!=='ready')return;
+  S.wishes[i].status='claimed';S.wishes[i].reward=reward;
+  if(reward==='spores')earn(WISHES[i].earn/5);
+  renderWish(true);if(tab==='album')renderAlbum();save();hud();toast(FRIENDS[i].n+'的回憶已收藏');
+ }
+});
 function friendPortrait(f,locked=false){
  const older=f.id==='elder',pink=f.id==='peach';
  return `<svg viewBox="0 0 200 200" aria-hidden="true"><g ${locked?'fill="#17291f"':''}>
@@ -238,12 +307,12 @@ function friendPortrait(f,locked=false){
 }
 function renderAlbum(){
  const f=FRIENDS.find(f=>f.id===albumId),known=S.collection.includes(f.id);
- $('panel').innerHTML=`<section class="album" aria-label="菇菇圖鑑"><h2>森林裡的朋友</h2><p>已遇見 ${S.collection.length}／${FRIENDS.length} 位 · 收藏會陪你走過每一次孢子雨</p><div class="album-list">${FRIENDS.map(c=>{const seen=S.collection.includes(c.id);return `<button data-friend="${c.id}" aria-pressed="${c.id===albumId}">${friendPortrait(c,!seen)}${seen?c.n:'未遇見'}<small>${seen?c.kind:'神祕的菇菇'}</small></button>`}).join('')}</div><h2>${known?f.n+' · '+f.trait:'一位還沒遇見的朋友'}</h2><button class="portrait" id="friendPortrait" ${known?'':'disabled'} aria-label="${known?'和'+f.n+'打招呼':'尚未解鎖的菇菇剪影'}">${friendPortrait(f,!known)}<span>${known?'點一下，和我打招呼':'繼續養大森林，就能遇見我'}</span></button><p>${known?f.desc:'解鎖條件：'+f.hint}</p><p class="album-response" id="friendResponse" role="status" aria-live="polite">${known?'「很高興在這裡遇見你。」':'目前人口：'+popN()+' · 聚落：'+TIERS[tierOf(S.g)].n}</p><p>願望與回憶貼紙將在後續更新加入。</p></section>`;
+ $('panel').innerHTML=`<section class="album" aria-label="菇菇圖鑑"><h2>森林裡的朋友</h2><p>已遇見 ${S.collection.length}／${FRIENDS.length} 位 · 收藏會陪你走過每一次孢子雨</p><div class="album-list">${FRIENDS.map(c=>{const seen=S.collection.includes(c.id);return `<button data-friend="${c.id}" aria-pressed="${c.id===albumId}">${friendPortrait(c,!seen)}${seen?c.n:'未遇見'}<small>${seen?c.kind:'神祕的菇菇'}</small></button>`}).join('')}</div><h2>${known?f.n+' · '+f.trait:'一位還沒遇見的朋友'}</h2><button class="portrait" id="friendPortrait" ${known?'':'disabled'} aria-label="${known?'和'+f.n+'打招呼':'尚未解鎖的菇菇剪影'}">${friendPortrait(f,!known)}<span>${known?'點一下，和我打招呼':'繼續養大森林，就能遇見我'}</span></button><p>${known?f.desc:'解鎖條件：'+f.hint}</p><p class="album-response" id="friendResponse" role="status" aria-live="polite">${known?'「很高興在這裡遇見你。」':'目前人口：'+popN()+' · 聚落：'+TIERS[tierOf(S.g)].n}</p>${known?memoryCard(FRIENDS.indexOf(f)):""}</section>`;
 }
 function unlockFriends(){
  let changed=false;
  for(const f of FRIENDS){if(!S.collection.includes(f.id)&&popN()>=f.at&&tierOf(S.g)>=f.t){S.collection.push(f.id);changed=true}}
- if(changed){if(tab==='album')renderAlbum();save()}
+ if(changed){if(tab==='album')renderAlbum();save()}renderWish();
 }
 let tapLog=[],combo=0,lastTap=0,buffMul=1,buffEnd=0,tapBuff=1,tapBuffEnd=0;
 function derive(){
@@ -352,7 +421,7 @@ function loop(){
 if(!RM)loop();
 
 /* ---------- 點擊 ---------- */
-function earn(v){S.sp+=v;S.total+=v}
+function earn(v){S.sp+=v;S.total+=v;advanceWish('earn',v)}
 const stage=document.querySelector('.stage');
 ['touchstart','touchmove','touchend'].forEach(ev=>stage.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 $('golden').addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
@@ -1095,7 +1164,7 @@ $('panel').addEventListener('click',e=>{
     const f=FRIENDS.find(f=>f.id===albumId);$('friendResponse').textContent='「'+f.line+'」';retrigger(b,'react');sfx.click();return;
   }
   const r=b.getBoundingClientRect(),bx=r.left+r.width/2,by=r.top+r.height/2;
-  if(b.dataset.g!==undefined){const i=+b.dataset.g,c=cost(i);if(S.sp>=c){S.sp-=c;S.g[i]++;
+  if(b.dataset.g!==undefined){const i=+b.dataset.g,c=cost(i);if(S.sp>=c){S.sp-=c;S.g[i]++;advanceWish('buy',1,i);
     sfx.buy();burst(bx,by,14,['#f2c14e','#dfe8cf'],4);render();
     const it=$('gi'+i);if(it){retrigger(it.querySelector('.ico'),'bounce');it.classList.add('flash');setTimeout(()=>it.classList.remove('flash'),250)}
     if([10,25,50,100].includes(S.g[i])){banner(`${GENS[i].n} ×${S.g[i]}！`);sfx.milestone()}
@@ -1105,9 +1174,9 @@ $('panel').addEventListener('click',e=>{
   else if(b.id==='pre'){doPrestige()}
 });
 async function doPrestige(){const g=seedGain();if(g<1)return;
-    if(!await ask({text:`確定要降下孢子雨？會獲得 ${g} 顆菌種，孢子、菌群與強化會重置。`,ok:'降下孢子雨'}))return;
+    if(!await ask({text:`確定要降下孢子雨？會獲得 ${g} 顆菌種，孢子、菌群與強化會重置。未完成的願望進度會清除；完成待領、回憶與貼紙會保留。`,ok:'降下孢子雨'}))return;
     const g2=seedGain();
-    const collection=S.collection.slice();S=fresh(S.seeds+g2,Math.max(S.best,S.total),S.snd,S.peak);S.collection=collection;derive();
+    const collection=S.collection.slice(),wishes=S.wishes.map(w=>w?.status==='active'?null:w);S=fresh(S.seeds+g2,Math.max(S.best,S.total),S.snd,S.peak);S.collection=collection;S.wishes=wishes;derive();renderWish(true);
     banner(`孢子雨！+${g2} 菌種`);sfx.milestone();flash();shake();
     for(let k=0;k<6;k++)setTimeout(()=>burst(Math.random()*innerWidth,-10,30,['#b79ad9','#dfe8cf','#f2c14e'],3,0.25),k*150);
     render();hud();save()}
@@ -1180,20 +1249,29 @@ async function save(manual){
 }
 function applySave(str,offline){
   const o=JSON.parse(str);
-  if(!o||typeof o!=='object'||Array.isArray(o)||o.version!==undefined&&o.version!==1)throw Error('不支援的存檔');
+  if(!o||typeof o!=='object'||Array.isArray(o)||o.version!==undefined&&![1,2].includes(o.version))throw Error('不支援的存檔');
   const next=Object.assign(fresh(),o);
   for(const k of ['sp','total','seeds','best','last','ms','peak']){if(!Number.isFinite(next[k])||next[k]<0)throw Error('無效數值')}
   if(typeof next.snd!=='boolean'||!Array.isArray(next.g)||next.g.length>GENS.length||!next.g.every(n=>Number.isSafeInteger(n)&&n>=0))throw Error('無效菌群');
   if(!Array.isArray(next.bought)||!next.bought.every(id=>UPS.some(u=>u.id===id))||new Set(next.bought).size!==next.bought.length)throw Error('無效強化');
   if(!Array.isArray(next.collection)||!next.collection.every(id=>FRIENDS.some(f=>f.id===id)))throw Error('無效圖鑑');
-  next.collection=[...new Set(next.collection)];next.version=1;
+  next.collection=[...new Set(next.collection)];
+  if(o.version!==2)next.wishes=[null,null,null];
+  if(!Array.isArray(next.wishes)||next.wishes.length!==WISHES.length)throw Error('無效願望');
+  let previousClaimed=true;
+  next.wishes=next.wishes.map((w,i)=>{
+   if(w===null){previousClaimed=false;return null}
+   if(!previousClaimed||!w||typeof w!=='object'||!next.collection.includes(FRIENDS[i].id)||!['earn','buy'].includes(w.path)||!['active','ready','claimed'].includes(w.status)||!Number.isFinite(w.progress)||w.progress<0||w.progress>wishTarget(i,w.path)||w.path==='buy'&&!Number.isInteger(w.progress))throw Error('無效願望進度');
+   if(w.status==='active'?(w.progress>=wishTarget(i,w.path)||w.reward!==null):(w.progress!==wishTarget(i,w.path)||w.status==='ready'&&w.reward!==null||w.status==='claimed'&&!['spores','sticker'].includes(w.reward)))throw Error('無效願望獎勵');
+   previousClaimed=w.status==='claimed';return {path:w.path,progress:w.progress,status:w.status,reward:w.reward};
+  });next.version=2;
   while(next.g.length<GENS.length)next.g.push(0);
   if(o.ms===undefined)next.ms=Math.max(0,Math.floor(Math.log10(Math.max(next.total,1))/3));
   S=next;
   derive();gTier=tierOf(S.g);
   if(offline){const sec=Math.max(0,Math.min((Date.now()-S.last)/1000,8*3600));const gain=basePps()*sec*0.5;
     if(gain>1){earn(gain);toast(`離線期間菌群收集了 ${fmt(gain)} 孢子`)}}
-  soundLabel();render();hud();
+  soundLabel();render();hud();renderWish(true);
 }
 async function load(){
   try{const v=await rawGet();if(v)applySave(v,true)}catch(e){toast('讀取存檔失敗，原存檔已保留，請匯入備份');setStatus('原存檔已保留；匯入有效備份或確認刪除進度後恢復存檔');gTierReady=true;scheduleGold();return}

@@ -43,12 +43,12 @@ async function freshPage(browser, viewport = { width: 390, height: 844 }, reduce
     assert.equal(portraitDelta, 0); pass++;
     await page.waitForTimeout(200);
     assert.match(await page.locator('#friendResponse').textContent(), /留了一個位置/); pass++;
-    for (const bad of [{...await page.evaluate(() => S), collection:['bogus']}, {...await page.evaluate(() => S), bought:['bogus']}, {...await page.evaluate(() => S),version:2}]) {
+    for (const bad of [{...await page.evaluate(() => S), collection:['bogus']}, {...await page.evaluate(() => S), bought:['bogus']}, {...await page.evaluate(() => S),version:3}]) {
       const result = await page.evaluate(b => {const before=JSON.stringify(S);let rejected=false;try{applySave(JSON.stringify(b),false)}catch{rejected=true}return {rejected,unchanged:JSON.stringify(S)===before}}, bad);
       assert.deepEqual(result, {rejected:true,unchanged:true}); pass++;
     }
     await page.evaluate(() => applySave(JSON.stringify({sp:0,total:0,g:[],bought:[],seeds:0,best:0,last:Date.now(),snd:true,peak:0}), false));
-    assert.equal(await page.evaluate(() => S.collection.length), 0); assert.equal(await page.evaluate(() => S.version), 1); pass++;
+    assert.equal(await page.evaluate(() => S.collection.length), 0); assert.equal(await page.evaluate(() => S.version), 2); pass++;
     await page.evaluate(() => { S.collection=['moss','peach']; S.total=1e6; S.last=Date.now(); });
     await page.locator('[data-t="pre"]').evaluate(e=>e.click());
     await page.evaluate(() => { S.total=1e6; render(); });
