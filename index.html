@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>孢子森林｜蘑菇增量遊戲</title>
-<meta name="description" content="點蘑菇收集孢子，養出小屋、村莊、聚落與城堡的可愛增量遊戲。">
+<meta name="description" content="點蘑菇收集孢子，從小屋養到城堡、雲端菇城與星海森林的可愛增量遊戲。">
 <meta name="theme-color" content="#243d31">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="孢子森林">
 <meta property="og:title" content="孢子森林">
-<meta property="og:description" content="點蘑菇收集孢子，養出小屋、村莊、聚落與城堡的可愛增量遊戲。">
+<meta property="og:description" content="點蘑菇收集孢子，從小屋養到城堡、雲端菇城與星海森林的可愛增量遊戲。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍄%3C/text%3E%3C/svg%3E">
 <style>
 :root{--moss:#243d31;--moss2:#2f5040;--lichen:#dfe8cf;--spore:#f2c14e;--lilac:#b79ad9;--cap:#c8463a}
@@ -23,6 +23,9 @@ body.evt-dance{background:radial-gradient(circle at 50% 20%,#4a3f78,#2a2a4a 62%)
 body.evt-camp{background:radial-gradient(circle at 50% 70%,#6b4a2a,#2d3a24 62%)}
 body.evt-market{background:radial-gradient(circle at 50% 20%,#4f6b3a,#2f4a34 62%)}
 body.evt-fest{background:radial-gradient(circle at 50% 20%,#2c3e6b,#141c38 72%)}
+body.evt-blossom{background:radial-gradient(circle at 50% 30%,#684a60,#283b32 70%)}
+body.evt-cloud{background:radial-gradient(circle at 50% 20%,#52647e,#293849 70%)}
+body.evt-starlight{background:radial-gradient(circle at 50% 20%,#45416e,#171b34 70%)}
 body.evt-parade{background:radial-gradient(circle at 50% 20%,#6b5a2a,#3a3a24 62%)}
 body.frenzy{background:radial-gradient(circle at 50% 20%,#6b5a2a,#2d3a24 60%)}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
@@ -109,7 +112,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .item .ico{font-size:26px;width:34px;text-align:center;display:inline-block}
 .item .ico.bounce{animation:bounce .35s}
 @keyframes bounce{40%{transform:translateY(-10px) scale(1.3)}}
-.item .info{flex:1;font-size:13px}
+.item .info{flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px}
 .item .name{font-size:15px;font-weight:700}
 .item button{padding:8px 10px;min-width:84px;border:none;border-radius:10px;background:var(--spore);color:var(--moss);font:inherit;font-weight:700;transition:transform .08s}
 .item button:active{transform:scale(.92)}
@@ -120,9 +123,9 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .prestige{margin-top:10px;padding:14px;border:1px dashed var(--lilac);border-radius:14px;font-size:14px;line-height:1.7}
 .prestige button{width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:var(--lilac);color:var(--moss);font:inherit;font-weight:700}
 .prestige button:disabled{opacity:.4}
-.banner{position:fixed;left:0;right:0;top:38%;text-align:center;z-index:8;pointer-events:none;font-size:30px;font-weight:700;color:var(--spore);text-shadow:0 0 20px rgba(242,193,78,.8),0 3px 0 #000;opacity:0}
+.banner{position:fixed;left:0;right:0;top:38%;padding:0 12px;overflow-wrap:anywhere;text-align:center;z-index:8;pointer-events:none;font-size:clamp(18px,5vw,30px);font-weight:700;color:var(--spore);text-shadow:0 0 20px rgba(242,193,78,.8),0 3px 0 #000;opacity:0}
 .banner.show{animation:banner 2s ease-out}
-@keyframes banner{0%{opacity:0;transform:scale(2.5)}15%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+@keyframes banner{0%{opacity:0;transform:translateY(12px)}15%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
 .flashscreen{position:fixed;inset:0;background:#fff3c4;z-index:4;pointer-events:none;opacity:0}
 .flashscreen.go{animation:fl .5s}
 @keyframes fl{0%{opacity:.5}100%{opacity:0}}
@@ -212,6 +215,9 @@ const GENS=[
  {n:'蘑菇精靈',i:'🧚',base:200000,p:400},
  {n:'古老菌王',i:'👑',base:3.3e6,p:2500},
  {n:'星際孢囊',i:'🪐',base:6e7,p:18000},
+ {n:'花冠菇園',i:'🌸',base:8e10,p:2e6,tier:4},
+ {n:'雲朵菇鯨',i:'☁️',base:1.6e13,p:4e8,tier:5},
+ {n:'星願母樹',i:'🌌',base:3.2e15,p:8e10,tier:6},
 ];
 const UPS=[
  {id:'t1',n:'厚實菌傘',d:'點擊 ×2',c:100,f:s=>s.tapM*=2},
@@ -228,6 +234,9 @@ const UPS=[
  {id:'a2',n:'森林意識',d:'全部菌群 ×2',c:3e7,f:s=>s.all*=2},
  {id:'g5',n:'王冠傳承',d:'古老菌王 ×2',c:8e7,req:s=>s.g[5]>=10,f:s=>s.gm[5]*=2},
  {id:'g6',n:'銀河黴菌',d:'星際孢囊 ×2',c:1.5e9,req:s=>s.g[6]>=10,f:s=>s.gm[6]*=2},
+ {id:'g7',n:'花瓣搖籃',d:'花冠菇園 ×2',c:2e12,req:s=>s.g[7]>=10,f:s=>s.gm[7]*=2},
+ {id:'g8',n:'柔軟雲床',d:'雲朵菇鯨 ×2',c:4e14,req:s=>s.g[8]>=10,f:s=>s.gm[8]*=2},
+ {id:'g9',n:'晚安星願',d:'星願母樹 ×2',c:8e16,req:s=>s.g[9]>=10,f:s=>s.gm[9]*=2},
 ];
 /* ---------- 自己的森林：配置與永久收藏 ---------- */
 function freshForest(){return{jobs:[null,null],decor:[null,null,null],decorUnlocked:[],theme:'star',themesUnlocked:['star'],visitors:[],nextEvent:null,preparation:'none'}}
@@ -325,10 +334,10 @@ const ACHIEVEMENTS=[
  {id:'castle',n:'森林的小王國',d:'建成香菇城堡',target:4,group:'自然成長',value:()=>tierOf(S.g)},
  {id:'combo',n:'一口氣的節奏',d:'達到連擊 50（每下間隔小於 450ms）',target:50,group:'刻意挑戰',value:()=>S.stats.combo},
  {id:'gold',n:'金色蘑菇觀察家',d:'累積點到 20 次金色蘑菇',target:20,group:'刻意挑戰',value:()=>S.stats.gold},
- {id:'balance',n:'誰也不能少',d:'同一周目七種菌群各持有至少 10 個',target:7,group:'刻意挑戰',value:()=>S.g.filter(n=>n>=10).length},
+ {id:'balance',n:'誰也不能少',d:'同一周目七種菌群各持有至少 10 個',target:7,group:'刻意挑戰',value:()=>S.g.slice(0,7).filter(n=>n>=10).length},
  {id:'moss100',n:'苔蘚鋪到天邊',d:'同一周目持有 100 個苔蘚地毯',target:100,group:'刻意挑戰',value:()=>S.g[0]},
  {id:'rebirth',n:'第三次春天',d:'累積完成 3 次孢子雨',target:3,group:'刻意挑戰',value:()=>S.stats.prestiges},
- {id:'festivals',n:'慶典巡禮',d:'參與過全部 5 種慶典（活動開始時記錄）',target:5,group:'刻意挑戰',value:()=>S.stats.events.length}
+ {id:'festivals',n:'慶典巡禮',d:'參與過原有 5 種慶典（活動開始時記錄）',target:5,group:'刻意挑戰',value:()=>S.stats.events.filter(id=>['dance','camp','market','fest','parade'].includes(id)).length}
 ];
 let achievementUnread=false;
 let stickerId='welcome';
@@ -411,7 +420,8 @@ const BREAKTHROUGHS=[
  {at:125,n:'共鳴',m:[32000,4000,640]},
  {at:150,n:'覺醒',m:[256000,32000,5120]},
  {at:175,n:'綻放',m:[2048000,256000,40960]},
- {at:200,n:'森之奇蹟',m:[16384000,2048000,327680]}
+ {at:200,n:'森之奇蹟',m:[16384000,2048000,327680]},
+ ...['花露','繁花','雲芽','雲冠','星光','星河','星願','永恆'].map((n,k)=>({at:225+k*25,n,m:[16384000,2048000,327680].map(m=>m*8**(k+1))}))
 ];
 function breakthroughStage(i,count=S.g[i]){return i<3?BREAKTHROUGHS.filter(b=>count>=b.at).pop()||null:null}
 function breakthroughMul(i,count=S.g[i]){return breakthroughStage(i,count)?.m[i]||1}
@@ -420,7 +430,7 @@ const basePps=()=>GENS.reduce((a,g,i)=>a+generatorUnitPps(i)*S.g[i],0);
 function breakthroughHint(i){
  const current=breakthroughStage(i),next=BREAKTHROUGHS.find(b=>b.at>S.g[i]);
  const status=current?`${current.n} · 突破 ×${fmt(current.m[i])}`:'尚未突破';
- return next?`${status}；下次 ${next.at} 個：單位再 ×${fmt(next.m[i]/breakthroughMul(i))}，整群常態 ${fmt(generatorUnitPps(i,next.at)*next.at)}/秒`:`${status} · 首批突破已全開`;
+ return next?`${status}；下次 ${next.at} 個：單位再 ×${fmt(next.m[i]/breakthroughMul(i))}，整群常態 ${fmt(generatorUnitPps(i,next.at)*next.at)}/秒`:`${status} · 400 個突破已全開`;
 }
 function purchaseBreakthrough(i,q){
  const after=breakthroughStage(i,S.g[i]+q.count),before=breakthroughStage(i);
@@ -554,7 +564,7 @@ stage.addEventListener('pointerdown',e=>{
 const gc=$('garden'),gx=gc.getContext('2d');let GW=0,GH=0;
 function gResize(){const r=stage.getBoundingClientRect(),d=devicePixelRatio||1;GW=r.width;GH=r.height;gc.width=GW*d;gc.height=GH*d;gx.setTransform(d,0,0,d,0,0)}
 gResize();addEventListener('resize',gResize);
-const CAPS=[30,12,12,12,8,4,6];
+const CAPS=[30,12,12,12,8,4,6,3,3,3];
 let ent=GENS.map(()=>[]),gSpores=[],smoke=[],walkers=[],gTier=0,gTierReady=false,castleBorn=0;
 const rnd=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 function syncGarden(){
@@ -613,6 +623,9 @@ const TIERS=[
   {n:'香菇村莊',i:'🏘️',req:[[1,20],[0,20],[2,8]]},
   {n:'香菇聚落',i:'🎪',req:[[1,30],[2,15],[3,10]]},
   {n:'香菇城堡',i:'🏰',req:[[1,40],[3,15],[4,8],[5,2]]},
+  {n:'花園王國',i:'🌸',req:[[0,125],[1,100],[6,40],[7,10]]},
+  {n:'雲端菇城',i:'☁️',req:[[0,200],[1,150],[7,25],[8,10]]},
+  {n:'星海森林',i:'🌌',req:[[0,300],[1,200],[8,25],[9,10]]},
 ];
 const tierOf=g=>{let t=0;for(let i=1;i<TIERS.length;i++){if(TIERS[i].req.every(([gi,n])=>g[gi]>=n))t=i;else break}return t};
 const popN=()=>S.g.reduce((a,b)=>a+b,0);
@@ -911,14 +924,18 @@ const EVENTS=[
   {id:'market',n:'蘑菇市集',i:'🛍️',tier:2,dur:26000},
   {id:'fest',n:'煙火慶典',i:'🎆',tier:3,dur:26000},
   {id:'parade',n:'城堡大遊行',i:'🎺',tier:4,dur:30000},
+  {id:'blossom',n:'花冠舞會',i:'🌸',tier:5,dur:30000,art:'dance'},
+  {id:'cloud',n:'雲上野餐',i:'☁️',tier:6,dur:32000,art:'camp'},
+  {id:'starlight',n:'星願燈會',i:'🌠',tier:7,dur:34000,art:'fest'},
 ];
 let ev=null,nextEv=0,nextEvId=null,lastEvId=null,guests=[],evSp=[],evRockets=[],evFw=[],evLan=[],lastBeat=0,lastPop=0;
 const FW=['255,120,120','255,220,120','140,220,255','200,160,255','150,255,190'];
 const STALLC=['#c8463a','#4f9a8a','#d9823b','#8d6bb8'];
 const ACTB={dance:['note'],clap:['heart','note'],cheer:['star','heart'],vend:['coin'],shop:['coin','heart'],march:['note','star'],ride:['heart','star']};
+const eventArt=()=>ev?.def.art||ev?.id;
 const evI=now=>ev?Math.max(0,Math.min(1,(now-ev.start)/1200,(ev.end-now)/1200)):0;
 function evMul(){return ev?ev.mul:1}
-const eb=(e,now,amp)=>ev&&ev.id==='dance'?-Math.abs(Math.sin(now/260+e.a*6))*amp*evI(now):0;
+const eb=(e,now,amp)=>ev&&eventArt()==='dance'?-Math.abs(Math.sin(now/260+e.a*6))*amp*evI(now):0;
 const crowd=()=>walkers.concat(guests);
 const stallXs=()=>{const c=GW/2;return [c-135,c-60,c+60,c+135].map(x=>Math.min(GW-28,Math.max(28,x)))};
 const scheduleEvent=ms=>{nextEv=performance.now()+ms};
@@ -937,6 +954,7 @@ function spawnGuests(n){
   }
 }
 function assignEvent(id){
+  id=EVENTS.find(e=>e.id===id)?.art||id;
   const G=GH-78,cx=GW/2,all=crowd(),n=all.length,xs=stallXs();
   all.forEach(w=>{w.leave=false;w.fixed=false;w.waiting=false;w.returning=false});
   if(id==='market'){
@@ -1047,8 +1065,8 @@ function explode(r){
 }
 function drawEventSky(t,now,G,dt){
   const k=Math.min(dt/16.7,3);
-  if(ev&&ev.id==='fest'&&evI(now)>0.3&&!RM&&Math.random()<dt*0.0014)evRockets.push({x:30+Math.random()*(GW-60),y:G-10,vy:-(3+Math.random()*1.2),ty:25+Math.random()*90,col:FW[Math.floor(Math.random()*FW.length)]});
-  if(ev&&ev.id==='fest'&&evI(now)>0.2&&!RM&&Math.random()<dt*0.0012)evLan.push({x:20+Math.random()*(GW-40),y:G-6,vy:-(0.25+Math.random()*0.25),ph:Math.random()*6,col:['255,170,70','255,120,90','255,210,110'][Math.floor(Math.random()*3)]});
+  if(ev&&eventArt()==='fest'&&evI(now)>0.3&&!RM&&Math.random()<dt*0.0014)evRockets.push({x:30+Math.random()*(GW-60),y:G-10,vy:-(3+Math.random()*1.2),ty:25+Math.random()*90,col:FW[Math.floor(Math.random()*FW.length)]});
+  if(ev&&eventArt()==='fest'&&evI(now)>0.2&&!RM&&Math.random()<dt*0.0012)evLan.push({x:20+Math.random()*(GW-40),y:G-6,vy:-(0.25+Math.random()*0.25),ph:Math.random()*6,col:['255,170,70','255,120,90','255,210,110'][Math.floor(Math.random()*3)]});
   if(!evRockets.length&&!evFw.length&&!evLan.length)return;
   gx.globalCompositeOperation='lighter';
   evRockets.forEach(r=>{
@@ -1104,7 +1122,7 @@ function updateParade(now,G){
   if(ev.rider){ev.rider.x=ev.fx+13;ev.rider.ty=G+22;ev.rider.dir=1}
 }
 function drawEventBack(t,now,G,dt,ei){
-  const id=ev.id;
+  const id=eventArt();
   if(id==='camp')drawCamp(now,G,dt,ei);
   else if(id==='market')stallXs().forEach((x,i)=>stallBack(x,G+24,ease(ei),i,now));
   else if(id==='parade'){updateParade(now,G);drawFloat(ev.fx,G,now)}
@@ -1116,7 +1134,7 @@ function drawEventBack(t,now,G,dt,ei){
     evSp.push({k:'conf',x:Math.random()*GW,y:-5,vx:(Math.random()-0.5)*0.6,vy:0.8+Math.random()*0.8,g:0,life:1,decay:0.0045,rot:Math.random()*6,vr:0.1,col:['#ff7a9c','#ffd86b','#7ef0e0','#c59be0','#fff'][Math.floor(Math.random()*5)]});
 }
 function drawEventFront(t,now,G,dt,ei){
-  if(ev.id==='market')stallXs().forEach((x,i)=>stallFront(x,G+24,ease(ei),i));
+  if(eventArt()==='market')stallXs().forEach((x,i)=>stallFront(x,G+24,ease(ei),i));
 }
 function drawEvSp(dt){
   if(!evSp.length)return;
@@ -1193,6 +1211,37 @@ function drawPreparation(t,G){
 }
 
 
+function drawExpansion(t,now,G){
+ if(gTier>=5){
+  gx.save();gx.globalAlpha=0.8;
+  for(let k=0;k<8;k++){
+   const x=18+k*(GW-36)/7,y=G-5;
+   gx.strokeStyle='#89b87b';gx.lineWidth=2;gx.beginPath();gx.moveTo(x,y+8);gx.lineTo(x,y-8);gx.stroke();
+   gx.fillStyle=k%2?'#f1b5d1':'#ffe4a0';
+   for(let j=0;j<5;j++){const a=j*Math.PI*2/5;gx.beginPath();gx.arc(x+Math.cos(a)*4,y-10+Math.sin(a)*4,3,0,7);gx.fill()}
+   gx.fillStyle='#fff4ce';gx.beginPath();gx.arc(x,y-10,2,0,7);gx.fill();
+  }
+  gx.restore();
+ }
+ if(gTier>=6){
+  gx.save();gx.fillStyle='rgba(220,235,250,.55)';
+  [0.15,0.85].forEach((f,i)=>{const x=GW*f,y=92+i*24+(RM?0:Math.sin(t/2200+i)*4);for(let j=-1;j<=1;j++){gx.beginPath();gx.ellipse(x+j*13,y,19,10+j*2,0,0,7);gx.fill()}});gx.restore();
+ }
+ if(gTier>=7){
+  gx.save();gx.strokeStyle='rgba(224,196,255,.6)';gx.lineWidth=1;gx.beginPath();
+  for(let k=0;k<7;k++){const x=20+k*(GW-40)/6,y=22+(k%2)*19;if(k)gx.lineTo(x,y);else gx.moveTo(x,y)}gx.stroke();
+  gx.fillStyle='#fff2b8';for(let k=0;k<7;k++){gx.beginPath();gx.arc(20+k*(GW-40)/6,22+(k%2)*19,2.5,0,7);gx.fill()}gx.restore();
+ }
+ [7,8,9].forEach(i=>ent[i].forEach((e,k)=>{
+  const x=GW*(0.18+k*0.32),y=i===7?G+13:i===8?85+k*20:55+k*16,sz=(i===7?14:17)*popIn(e,now);
+  const bob=RM?0:Math.sin(t/1800+e.b*6)*3;
+  if(i===8){gx.fillStyle='#e2eaf7';gx.beginPath();gx.ellipse(x,y+bob,sz*1.6,sz*0.7,0,0,7);gx.fill();gx.beginPath();gx.moveTo(x+sz,y+bob);gx.lineTo(x+sz*2,y-sz*0.6+bob);gx.lineTo(x+sz*1.7,y+sz*0.4+bob);gx.fill()}
+  if(i===9){gx.strokeStyle='#bba3d0';gx.lineWidth=3;gx.beginPath();gx.moveTo(x,y+sz*1.6);gx.lineTo(x,y);gx.moveTo(x,y+sz);gx.lineTo(x-sz*0.7,y+sz*0.5);gx.moveTo(x,y+sz*0.8);gx.lineTo(x+sz*0.8,y+sz*0.3);gx.stroke()}
+  miniShroom(x,y+bob,sz,i===7?'#e4a0bf':i===8?'#acc8eb':'#b69de1','#fff1db',0,'sleep');
+  gx.fillStyle=i===7?'#fff0a8':'#fff4cf';for(let j=0;j<3;j++){gx.beginPath();gx.arc(x+(j-1)*sz*0.38,y-sz*(1+j%2*0.2)+bob,2,0,7);gx.fill()}
+ }));
+}
+
 let gLast=performance.now();
 function gardenLoop(now){
   const t=RM?0:now,dt=Math.min(now-gLast,50);gLast=now;
@@ -1206,6 +1255,7 @@ function gardenLoop(now){
     gx.strokeStyle='rgba(223,232,207,.5)';gx.lineWidth=1;gx.beginPath();gx.ellipse(x,y,r*1.8,r*0.5,-0.3,0,7);gx.stroke();ring(x,y,e,now);
     if(Math.random()<dt*0.0008)emit(x,y,'#8fb8de')});
   drawCastle(t,now,G);
+  drawExpansion(t,now,G);
   drawEventSky(t,now,G,dt);
   // 菌絲網路（地底）
   gx.lineWidth=1.5;
@@ -1232,7 +1282,7 @@ function gardenLoop(now){
       miniShroom(x,G+2+eb(e,now,3),sz,['#8a5a3b','#a0673f','#74492f'][Math.floor(e.a*3)],'#e9dcc0',Math.sin(t/700+e.a*6)*0.08,'open');ring(x,G-sz*0.5,e,now);
       if(Math.random()<dt*0.0005)emit(x,G-sz,'#f6ecd6')});
   }else{
-    const K=Math.min(Math.max(GW/390,0.85),1.25),xmin=18*K,xmax=Math.max(xmin+30,cx-92),SZ=[0,30,32,35,35][gTier]*K;
+    const K=Math.min(Math.max(GW/390,0.85),1.25),xmin=18*K,xmax=Math.max(xmin+30,cx-92),SZ=[0,30,32,35,35][Math.min(gTier,4)]*K;
     const xAt=c=>xmin+(xmax-xmin)*(c/2),n=Math.min(ent[1].length,12),tips=[[],[]];
     for(const R of [1,0])for(let k=0;k<n;k++){
       const [c,row]=SLOTS[k>>1];if(row!==R)continue;
@@ -1256,7 +1306,7 @@ function gardenLoop(now){
   crowd().sort((a,b)=>(a.cy||0)-(b.cy||0)).forEach(w=>drawChar(w,t,dt,G));
   if(ev){
     drawEventFront(t,now,G,dt,ei);
-    if(ev.id==='dance'||ev.id==='parade'){const bn=Math.floor(now/520);if(bn!==lastBeat){lastBeat=bn;sfx.kick()}}
+    if(eventArt()==='dance'||eventArt()==='parade'){const bn=Math.floor(now/520);if(bn!==lastBeat){lastBeat=bn;sfx.kick()}}
   }
   // 蘑菇精靈
   ent[4].forEach(e=>{const s=popIn(e,now),x=cx+Math.sin(t/(1600+e.a*1400)+e.b*6.28)*(GW/2-28),y=70+Math.sin(t/(900+e.c*700)+e.a*6.28)*48;
@@ -1309,7 +1359,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');tab=b.dataset.t;render();
 });
-const visibleGens=()=>GENS.map((g,i)=>i===0||S.g[i-1]>0||S.total>=g.base*0.5);
+const visibleGens=()=>GENS.map((g,i)=>S.g[i]>0||(g.tier!==undefined?tierOf(S.g)>=g.tier:i===0||S.g[i-1]>0||S.total>=g.base*0.5));
 const availUps=()=>UPS.filter(u=>!S.bought.includes(u.id)&&(!u.req||u.req(S)));
 let buyMode=1,buyHold=null,suppressBuyClick=-1,suppressBuyUntil=0;
 function purchaseQuote(i,limit=buyMode){
@@ -1322,6 +1372,7 @@ function purchaseQuote(i,limit=buyMode){
  return{count,spent,remaining};
 }
 function buyGenerator(i){
+ if(!visibleGens()[i])return false;
  const q=purchaseQuote(i);if(!q.count)return false;
  const before=S.g[i];S.sp=q.remaining;S.g[i]+=q.count;
  sfx.buy();
@@ -1359,7 +1410,7 @@ function render(){
   if(tab==='gen'){
     h=`<div class="buy-modes" aria-label="購買數量">${[1,10,100,'max'].map(n=>`<button data-buy-mode="${n}" aria-pressed="${buyMode===n}">${n==='max'?'最大':'×'+n}</button>`).join('')}</div><p class="buy-hint">依餘額購買可負擔的數量；按住購買可連買，放開或滑走即停止。</p>`;
     GENS.forEach((g,i)=>{
-      if(!vis[i]){h+=`<div class="item locked"><div class="ico">❔</div><div class="info">繼續累積孢子來發現新菌群</div></div>`;return}
+      if(!vis[i]){h+=`<div class="item locked"><div class="ico">❔</div><div class="info">${g.tier!==undefined?'到達'+TIERS[g.tier].n+'解鎖新菌群':'繼續累積孢子來發現新菌群'}</div></div>`;return}
       h+=`<div class="item" id="gi${i}"><span class="ico">${g.i}</span><div class="info"><div class="name">${g.n} ×${S.g[i]}</div><span class="unit-rate"></span>${i<3?'<span class="breakthrough-hint"></span><span class="purchase-breakthrough"></span>':''}</div><button data-g="${i}"></button></div>`;
     });
   }else if(tab==='up'){

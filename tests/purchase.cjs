@@ -67,7 +67,7 @@ const root=path.resolve(__dirname,'..');
   await page.locator('[data-g="0"]').focus();await page.keyboard.press('Enter');assert.ok(await page.evaluate(()=>S.g[0]>1));pass++;
   await page.waitForTimeout(200);
   assert.equal(await page.evaluate(()=>document.activeElement.dataset.g),'0');pass++;
-  await page.evaluate(()=>{S.g=[50,51,30,38,57,50,40];S.sp=14.87e9;S.seeds=873;S.bought=UPS.map(u=>u.id);derive();buyMode='max';render();hud()});
+  await page.evaluate(()=>{S.g=[50,51,30,38,57,50,40,0,0,0];S.sp=14.87e9;S.seeds=873;S.bought=UPS.map(u=>u.id);derive();buyMode='max';render();hud()});
   for(const width of [320,390,1280]){
    await page.setViewportSize({width,height:844});
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

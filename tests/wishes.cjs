@@ -37,7 +37,7 @@ const root=path.resolve(__dirname,'..');
   assert.ok(await page.evaluate(()=>S.achievements.includes('combo')));checks++;
   await page.evaluate(()=>{S.g=S.g.map(()=>10);hud()});assert.ok(await page.evaluate(()=>S.achievements.includes('balance')));checks++;
   await page.evaluate(()=>{S.g[0]=100;hud()});assert.ok(await page.evaluate(()=>S.achievements.includes('moss100')));checks++;
-  await page.evaluate(()=>{S.g=[20,40,15,15,8,2,10];hud()});assert.ok(await page.evaluate(()=>S.achievements.includes('castle')));checks++;
+  await page.evaluate(()=>{S.g=[20,40,15,15,8,2,10,0,0,0];hud()});assert.ok(await page.evaluate(()=>S.achievements.includes('castle')));checks++;
   const reducedEvent=await page.evaluate(()=>{endEvent(true);gTierReady=true;nextEv=performance.now()-1;tickEvents();return !!ev});assert.ok(reducedEvent);checks++;
   await page.evaluate(()=>{S.stats.events=[];for(const def of EVENTS){startEvent(def);endEvent(true)}hud()});assert.ok(await page.evaluate(()=>S.achievements.includes('festivals')));checks++;
   for(let i=0;i<3;i++){

@@ -8,6 +8,7 @@ const checks = [
   ['森林分工與收藏', process.execPath, ['tests/forest.cjs']],
   ['大量購買與長按', process.execPath, ['tests/purchase.cjs']],
   ['菌群突破成長', process.execPath, ['tests/breakthrough.cjs']],
+  ['後期聚落與新菌群', process.execPath, ['tests/expansion.cjs']],
   ['差異空白檢查', 'git', ['diff', '--check']]
 ];
 let passed = 0, assertions = 0;

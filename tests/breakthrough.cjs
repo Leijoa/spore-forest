@@ -7,8 +7,8 @@ const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const root = path.resolve(__dirname, '..');
-const at = [50, 100, 125, 150, 175, 200];
-const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[2048000,256000,40960],[16384000,2048000,327680]];
+const at = [50, 100, 125, 150, 175, 200,225,250,275,300,325,350,375,400];
+const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[2048000,256000,40960],[16384000,2048000,327680],...Array.from({length:8},(_,k)=>[16384000,2048000,327680].map(n=>n*8**(k+1)))];
 
 (async () => {
   const browser = await playwright.chromium.launch({ channel: 'msedge', headless: true });
@@ -44,18 +44,18 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // The authoritative unit, total production, derived bonuses, and untouched late generators agree.
     const formula = await page.evaluate(() => {
-      S = fresh(873); S.g = [125, 100, 50, 38, 57, 50, 40];
+      S = fresh(873); S.g = [125, 100, 50, 38, 57, 50, 40,0,0,0];
       S.bought = UPS.map(u => u.id); S.forest.jobs = [{friend:'moss',role:'idle'}, {friend:'peach',role:'tap'}]; derive();
       const units = GENS.map((_, i) => generatorUnitPps(i));
       return { units, base: basePps(), tap: tapVal(), expectedUnits: GENS.map((g,i)=>g.p*D.gm[i]*breakthroughMul(i)*D.all*D.seedMul*workMul('idle')) };
     });
     formula.units.forEach((n,i)=>assert.ok(Math.abs(n-formula.expectedUnits[i])<Math.max(1e-9,n*1e-12))); 
-    assert.ok(Math.abs(formula.base-formula.units.reduce((s,n,i)=>s+n*[125,100,50,38,57,50,40][i],0)) < formula.base*1e-12);
+    assert.ok(Math.abs(formula.base-formula.units.reduce((s,n,i)=>s+n*[125,100,50,38,57,50,40,0,0,0][i],0)) < formula.base*1e-12);
     assert.ok(formula.tap>0); pass++;
 
     // Tap inherits the new production through tapPct, while combo stays fixed at ×1.
     const tapPaths=await page.evaluate(()=>{
-      const setup=()=>{endEvent(true);S=fresh(2);S.g=[100,50,0,0,0,0,0];S.bought=['t1','t2'];S.forest.jobs=[{friend:'moss',role:'tap'},{friend:'peach',role:'idle'}];derive();combo=0;tapBuff=1;buffMul=1;buffEnd=0};
+      const setup=()=>{endEvent(true);S=fresh(2);S.g=[100,50,0,0,0,0,0,0,0,0];S.bought=['t1','t2'];S.forest.jobs=[{friend:'moss',role:'tap'},{friend:'peach',role:'idle'}];derive();combo=0;tapBuff=1;buffMul=1;buffEnd=0};
       setup();const plainBase=basePps(),plain=tapVal(),plainExpected=((2*1.2*1.15)+plainBase*.01)*1;
       setup();S.forest.preparation='picnic';startEvent(EVENTS[0]);buffMul=7;tapBuff=15;
       const event=evMul(),boostedBase=basePps(),boosted=tapVal(),boostedExpected=((2*1.2*1.15)+boostedBase*.01*7*1.65)*15;
@@ -67,7 +67,7 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
     assert.ok(Math.abs(tapPaths.boosted-tapPaths.boostedExpected)<tapPaths.boostedExpected*1e-12);pass++;
 
     // Live row hint, unit rate and batch offer derive from the same current count and quote.
-    await page.evaluate(() => { S=fresh();S.g=[49,99,45,38,57,50,40];S.sp=1e30;buyMode=10;derive();render();hud() });
+    await page.evaluate(() => { S=fresh();S.g=[49,99,45,38,57,50,40,0,0,0];S.sp=1e30;buyMode=10;derive();render();hud() });
     for (let i=0;i<3;i++) {
       const row=page.locator(`#gi${i}`);
       assert.equal(await row.locator('.unit-rate').count(),1);
@@ -105,7 +105,7 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // The supplied late-game save reaches 100 on all early groups within its 14.87B balance.
     const lateSave=await page.evaluate(()=>{
-      S=fresh(873);S.g=[50,51,30,38,57,50,40];S.sp=14.87e9;S.bought=UPS.map(u=>u.id);derive();render();
+      S=fresh(873);S.g=[50,51,30,38,57,50,40,0,0,0];S.sp=14.87e9;S.bought=UPS.map(u=>u.id);derive();render();
       const start=S.sp,targets=[100,100,100];
       for(let i=0;i<3;i++){buyMode=targets[i]-S.g[i];if(!buyGenerator(i))throw Error('unaffordable target '+i)}
       const at100=[0,1,2].map(i=>generatorUnitPps(i)*S.g[i]),spent=start-S.sp;
@@ -119,13 +119,13 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // Buying across multiple thresholds charges the ordinary per-unit prices and updates output immediately.
     const batch = await page.evaluate(() => {
-      S=fresh();S.g=[49,98,30,0,0,0,0];S.sp=1e30;buyMode='max';derive();render();
+      S=fresh();S.g=[49,98,30,0,0,0,0,0,0,0];S.sp=1e30;buyMode='max';derive();render();
       const before=S.sp, q=purchaseQuote(0), expected=Array.from({length:q.count},(_,k)=>Math.ceil(15*1.15**(49+k))).reduce((a,b)=>a+b,0);
       const prior=basePps();buyGenerator(0);
       return {count:q.count, expected, spent:before-S.sp, g:S.g.slice(0,2), prior, after:basePps(), hint:document.querySelector('#gi0 .breakthrough-hint').textContent};
     });
     assert.ok(batch.g[0]>=200); assert.equal(batch.g[1],98); assert.ok(Math.abs(batch.spent-batch.expected)<batch.expected*1e-12);
-    assert.ok(batch.after>batch.prior*8); assert.match(batch.hint,/森之奇蹟/); pass++;
+    assert.ok(batch.after>batch.prior*8); assert.match(batch.hint,/永恆/); pass++;
 
     // Long press crosses the 50 boundary without replacing the row; displayed rate follows count.
     await page.evaluate(() => { S=fresh();S.g[0]=49;S.sp=1e30;buyMode=1;derive();render(); });
@@ -140,7 +140,7 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // A pre-feature v3 save at the threshold gains the formula without bonus currency.
     const oldSave=await page.evaluate(() => {
-      const old={...fresh(873),g:[100,100,50,38,57,50,40],sp:123456,total:9e9,bought:UPS.map(u=>u.id),last:Date.now(),forest:{...freshForest()}};
+      const old={...fresh(873),g:[100,100,50,38,57,50,40,0,0,0],sp:123456,total:9e9,bought:UPS.map(u=>u.id),last:Date.now(),forest:{...freshForest()}};
       const money=old.sp;applySave(JSON.stringify(old),false);
       return {version:S.version,sp:S.sp,money,units:[0,1,2].map(i=>generatorUnitPps(i)),g:S.g.slice(0,3)};
     });
@@ -149,7 +149,7 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // Export and import preserve the count-based state without compounding multipliers.
     const roundtrip=await page.evaluate(async()=>{
-      S.g=[125,100,50,38,57,50,40];derive();const target=JSON.stringify([0,1,2].map(i=>generatorUnitPps(i)));
+      S.g=[125,100,50,38,57,50,40,0,0,0];derive();const target=JSON.stringify([0,1,2].map(i=>generatorUnitPps(i)));
       let code='';const oldAsk=ask;Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async v=>{code=v}}});
       await exportSave();ask=async()=>code;
       try{await importSave()}finally{ask=oldAsk}
@@ -159,7 +159,7 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // Offline uses the same upgraded base production, capped at eight hours and multiplied by 50%.
     const offline=await page.evaluate(()=>{
-      const old={...fresh(873),g:[100,100,50,0,0,0,0],last:Date.now()-3600_000,sp:0,total:0,bought:[],forest:freshForest()};
+      const old={...fresh(873),g:[100,100,50,0,0,0,0,0,0,0],last:Date.now()-3600_000,sp:0,total:0,bought:[],forest:freshForest()};
       const expected=(()=>{S={...fresh(873),g:old.g.slice(),bought:[],forest:freshForest()};derive();return basePps()*3600*.5})();
       applySave(JSON.stringify(old),true);return {delta:S.sp,expected};
     });
@@ -167,16 +167,16 @@ const mult = [[10,8,5],[4000,500,80],[32000,4000,640],[256000,32000,5120],[20480
 
     // Real prestige removes this round's quantities while preserving residents and their permanent collection.
     const prestige=await page.evaluate(async()=>{
-      S=fresh(2);S.collection=['moss','peach'];S.forest.jobs=[{friend:'moss',role:'idle'},{friend:'peach',role:'tap'}];S.g=[125,100,50,0,0,0,0];S.total=1e9;derive();
+      S=fresh(2);S.collection=['moss','peach'];S.forest.jobs=[{friend:'moss',role:'idle'},{friend:'peach',role:'tap'}];S.g=[125,100,50,0,0,0,0,0,0,0];S.total=1e9;derive();
       const oldAsk=ask;ask=async()=>true;try{await doPrestige()}finally{ask=oldAsk}
       return {g:S.g.slice(),seeds:S.seeds,collection:S.collection,jobs:S.forest.jobs,mul:breakthroughMul(0)};
     });
-    assert.ok(prestige.seeds>2);assert.deepEqual(prestige.g,[0,0,0,0,0,0,0]);assert.equal(prestige.mul,1);
+    assert.ok(prestige.seeds>2);assert.deepEqual(prestige.g,[0,0,0,0,0,0,0,0,0,0]);assert.equal(prestige.mul,1);
     assert.deepEqual(prestige.collection,['moss','peach']);assert.equal(prestige.jobs[0].friend,'moss');pass++;
 
     for(const width of [320,390,1280]){
       await page.setViewportSize({width,height:844});
-      await page.evaluate(()=>{S.g=[50,51,30,38,57,50,40];S.sp=14.87e9;S.seeds=873;S.bought=UPS.map(u=>u.id);derive();render()});
+      await page.evaluate(()=>{S.g=[50,51,30,38,57,50,40,0,0,0];S.sp=14.87e9;S.seeds=873;S.bought=UPS.map(u=>u.id);derive();render()});
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       assert.ok(await page.locator('#gi0 .breakthrough-hint').evaluate(e=>e.getBoundingClientRect().width>0));pass++;
     }
