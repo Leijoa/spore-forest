@@ -71,7 +71,7 @@ async function freshPage(browser, viewport = { width: 390, height: 844 }, reduce
     await context.close();
 
     const reduced = await freshPage(browser, undefined, true);
-    await reduced.page.evaluate(() => {S.collection=['moss'];render()});
+    await reduced.page.evaluate(() => {S.collection=['moss'];unlockForest();render()});
     await reduced.page.locator('#friendPortrait').evaluate(e=>e.click());
     assert.match(await reduced.page.locator('#friendResponse').textContent(), /留了一個位置/); pass++;
     await reduced.context.close();

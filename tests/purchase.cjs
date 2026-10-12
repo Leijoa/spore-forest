@@ -11,6 +11,8 @@ const root=path.resolve(__dirname,'..');
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(pathToFileURL(path.join(root,'index.html')).href);await page.waitForFunction(()=>loaded);
   const reset=async(sp=1000000)=>page.evaluate(sp=>{stopBuyHold();S=fresh();S.sp=sp;buyMode=1;tab='gen';derive();render();hud()},sp);
+  // 讀當下 DOM，避免定時商店重繪使先取得的 element handle 脫離文件。
+  const buttonBox=()=>page.evaluate(()=>{const r=document.querySelector('[data-g="0"]').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}});
   await reset();
   for(const limit of [1,10,100,'max']){
    const result=await page.evaluate(limit=>{
@@ -35,14 +37,14 @@ const root=path.resolve(__dirname,'..');
   assert.ok(enormous.count>1000&&enormous.count<10000);assert.equal(enormous.finite,true);pass++;
   // Mouse hold uses real pointer events; release must not append a synthetic extra purchase.
   await reset();
-  let box=await page.locator('[data-g="0"]').boundingBox();
+  let box=await buttonBox();
   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
   await page.waitForFunction(()=>S.g[0]>=3);const held=await page.evaluate(()=>S.g[0]);await page.mouse.up();
   await page.waitForTimeout(260);assert.equal(await page.evaluate(()=>S.g[0]),held);pass++;
   // A fresh tap immediately after hold is not swallowed by click suppression.
   await page.locator('[data-g="0"]').tap();assert.equal(await page.evaluate(()=>S.g[0]),held+1);pass++;
   for(const stop of ['move','cancel','tab','blur','reset']){
-   await reset();box=await page.locator('[data-g="0"]').boundingBox();
+   await reset();box=await buttonBox();
    await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForFunction(()=>S.g[0]>=2);
    if(stop==='move')await page.mouse.move(2,2);
    else await page.evaluate(stop=>{

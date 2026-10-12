@@ -115,6 +115,7 @@ body.evt-fest #shroom,body.evt-parade #shroom{animation:hopm .52s ease-in-out in
 .item button:active{transform:scale(.92)}
 .item button:disabled{background:#4a6456;color:#8fa596}
 .buy-modes{display:flex;gap:6px;margin:12px 0 4px}.buy-modes button{flex:1;min-height:44px;border:1px solid #738469;border-radius:10px;background:#243d31;color:var(--lichen);font:inherit;font-size:13px}.buy-modes button[aria-pressed=true]{background:var(--lichen);color:var(--moss)}.buy-hint{font-size:12px;opacity:.8;margin:6px 0}.item button[data-g]{min-height:48px;touch-action:none}.item button[data-g] small{display:block;font-size:11px;font-weight:normal}.buy-modes button:focus-visible{outline:3px solid var(--spore)}
+.breakthrough-hint,.purchase-breakthrough{display:block;font-size:11px;line-height:1.6;margin-top:4px}.breakthrough-hint{color:var(--lilac)}.purchase-breakthrough{color:var(--spore)}
 .item.locked{opacity:.45}
 .prestige{margin-top:10px;padding:14px;border:1px dashed var(--lilac);border-radius:14px;font-size:14px;line-height:1.7}
 .prestige button{width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:var(--lilac);color:var(--moss);font:inherit;font-weight:700}
@@ -403,7 +404,28 @@ function derive(){
   D.seedMul=1+S.seeds*0.1;
 }
 const cost=i=>Math.ceil(GENS[i].base*Math.pow(1.15,S.g[i]));
-const basePps=()=>GENS.reduce((a,g,i)=>a+g.p*S.g[i]*D.gm[i],0)*D.all*D.seedMul*workMul('idle');
+// 突破表存「總倍率」，依持有量取最高一段，不連乘、不寫存檔旗標。
+const BREAKTHROUGHS=[
+ {at:50,n:'扎根',m:[10,8,5]},
+ {at:100,n:'繁盛',m:[4000,500,80]},
+ {at:125,n:'共鳴',m:[32000,4000,640]},
+ {at:150,n:'覺醒',m:[256000,32000,5120]},
+ {at:175,n:'綻放',m:[2048000,256000,40960]},
+ {at:200,n:'森之奇蹟',m:[16384000,2048000,327680]}
+];
+function breakthroughStage(i,count=S.g[i]){return i<3?BREAKTHROUGHS.filter(b=>count>=b.at).pop()||null:null}
+function breakthroughMul(i,count=S.g[i]){return breakthroughStage(i,count)?.m[i]||1}
+function generatorUnitPps(i,count=S.g[i]){return GENS[i].p*D.gm[i]*breakthroughMul(i,count)*D.all*D.seedMul*workMul('idle')}
+const basePps=()=>GENS.reduce((a,g,i)=>a+generatorUnitPps(i)*S.g[i],0);
+function breakthroughHint(i){
+ const current=breakthroughStage(i),next=BREAKTHROUGHS.find(b=>b.at>S.g[i]);
+ const status=current?`${current.n} · 突破 ×${fmt(current.m[i])}`:'尚未突破';
+ return next?`${status}；下次 ${next.at} 個：單位再 ×${fmt(next.m[i]/breakthroughMul(i))}，整群常態 ${fmt(generatorUnitPps(i,next.at)*next.at)}/秒`:`${status} · 首批突破已全開`;
+}
+function purchaseBreakthrough(i,q){
+ const after=breakthroughStage(i,S.g[i]+q.count),before=breakthroughStage(i);
+ return q.count&&after&&after!==before?`本批達「${after.n}」· 整群常態 ${fmt(generatorUnitPps(i,S.g[i]+q.count)*(S.g[i]+q.count))}/秒`:'';
+}
 const pps=()=>basePps()*buffMul*evMul();
 const comboMul=()=>1+Math.min(combo,50)*0.02;
 const tapVal=()=>((D.tapM*D.seedMul*workMul('tap'))+pps()*D.tapPct)*comboMul()*tapBuff;
@@ -1338,7 +1360,7 @@ function render(){
     h=`<div class="buy-modes" aria-label="購買數量">${[1,10,100,'max'].map(n=>`<button data-buy-mode="${n}" aria-pressed="${buyMode===n}">${n==='max'?'最大':'×'+n}</button>`).join('')}</div><p class="buy-hint">依餘額購買可負擔的數量；按住購買可連買，放開或滑走即停止。</p>`;
     GENS.forEach((g,i)=>{
       if(!vis[i]){h+=`<div class="item locked"><div class="ico">❔</div><div class="info">繼續累積孢子來發現新菌群</div></div>`;return}
-      h+=`<div class="item" id="gi${i}"><span class="ico">${g.i}</span><div class="info"><div class="name">${g.n} ×${S.g[i]}</div>每個 ${fmt(g.p*D.gm[i]*D.all*D.seedMul*workMul('idle'))}/秒</div><button data-g="${i}"></button></div>`;
+      h+=`<div class="item" id="gi${i}"><span class="ico">${g.i}</span><div class="info"><div class="name">${g.n} ×${S.g[i]}</div><span class="unit-rate"></span>${i<3?'<span class="breakthrough-hint"></span><span class="purchase-breakthrough"></span>':''}</div><button data-g="${i}"></button></div>`;
     });
   }else if(tab==='up'){
     const list=availUps();
@@ -1377,7 +1399,14 @@ async function doPrestige(){const g=seedGain();if(g<1)return;
     render();hud();save()}
 function refreshBtns(){
   const pb=$('pre');if(pb){const g=seedGain();pb.disabled=g<1;const pg=$('preGain');if(pg)pg.textContent=g;const pt=$('preTotal');if(pt)pt.textContent=fmt(S.total);const ph=$('preHint');if(ph)ph.style.display=g<1?'':'none'}
-  document.querySelectorAll('#panel button[data-g]').forEach(b=>{const i=+b.dataset.g,q=purchaseQuote(i);b.disabled=!q.count;b.innerHTML=`買 ${q.count||1}<small>${fmt(q.count?q.spent:cost(i))}</small>`;b.setAttribute('aria-label',`購買${GENS[i].n} ${q.count||1} 個，總價 ${fmt(q.count?q.spent:cost(i))} 孢子`)});
+  document.querySelectorAll('#panel button[data-g]').forEach(b=>{
+   const i=+b.dataset.g,q=purchaseQuote(i),row=$('gi'+i);b.disabled=!q.count;
+   const label=`買 ${q.count||1}<small>${fmt(q.count?q.spent:cost(i))}</small>`;if(b.innerHTML!==label)b.innerHTML=label;
+   b.setAttribute('aria-label',`購買${GENS[i].n} ${q.count||1} 個，總價 ${fmt(q.count?q.spent:cost(i))} 孢子`);
+   const update=(selector,txt)=>{const el=row.querySelector(selector);if(el&&el.textContent!==txt)el.textContent=txt};
+   update('.unit-rate',`每個 ${fmt(generatorUnitPps(i))}/秒`);
+   if(i<3){update('.breakthrough-hint',breakthroughHint(i));update('.purchase-breakthrough',purchaseBreakthrough(i,q))}
+  });
   document.querySelectorAll('#panel button[data-u]').forEach(b=>b.disabled=S.sp<UPS.find(u=>u.id===b.dataset.u).c);
   const vis=visibleGens();
   $('dotgen').classList.toggle('show',tab!=='gen'&&GENS.some((g,i)=>vis[i]&&S.sp>=cost(i)));
