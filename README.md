@@ -31,7 +31,7 @@
 - [角色分工與專案規則](AGENTS.md)
 - [目前進度與下一步](SYNC.md)
 - [完成紀錄](CHANGELOG.md)
-- [開發接力流程](docs/DEVELOPMENT_WORKFLOW.md)
+- [開發流程](docs/DEVELOPMENT_WORKFLOW.md)
 - [工作包範本](docs/TASK_TEMPLATE.md)
 
-整批驗收執行 `node scripts/verify.cjs`，目前涵蓋兩套瀏覽器檢查與差異空白檢查。大型工作依韻西規格、阿扣實作與驗證、韻西差異審查、阿雷試玩與授權發布接力。阿扣協作與工作資料留在本機忽略目錄。
+整批驗收執行 `node scripts/verify.cjs`，目前涵蓋五套瀏覽器檢查與差異空白檢查，最近完整結果 6/6、197 項通過。韻西負責規格、實作、驗證、差異審查與修正，再由阿雷試玩並授權發布。工作資料與歷史協作紀錄留在本機忽略目錄。
